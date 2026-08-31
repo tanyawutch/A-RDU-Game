@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ARD Admin Dashboard</title>
+  <style>
+@import url('https://fonts.googleapis.com/css2?family=Mali:wght@400;500;700;800&display=swap');
+:root{--blue:#1760a8;--deep:#0d376c;--ink:#173049;--muted:#61748a;--line:#d7e4ef;--soft:#f4f8fb;--pink:#f7d7e8;--mint:#dff3e8;--lav:#eee4ff;--shadow:0 18px 45px rgba(23,48,73,.16)}
+*{box-sizing:border-box}body{margin:0;font-family:"Mali","Segoe UI",sans-serif;color:var(--ink);background:linear-gradient(180deg,#eef9ff,#fff8fc 60%,#f4fbf6)}button,input,select{font:inherit}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px clamp(16px,3vw,36px);background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+.brand{display:flex;align-items:center;gap:12px}.brand img{width:50px;height:50px;border-radius:50%;object-fit:contain}.brand h1{margin:0;font-size:clamp(20px,3vw,30px)}
+main{width:min(1240px,calc(100% - 28px));margin:0 auto;padding:24px 0 32px}.panel{background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);padding:18px}.panel+.panel{margin-top:16px}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0}.btn{border:1px solid var(--line);border-radius:8px;background:#fff;padding:10px 14px;font-weight:800;cursor:pointer;text-decoration:none;color:var(--ink);display:inline-flex;align-items:center;justify-content:center;gap:6px}.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}.btn.pink{background:var(--pink);color:#5f3f55}.btn.mint{background:var(--mint);color:#235b3e}.btn.lav{background:var(--lav);color:#4b3f63}.btn.danger{background:#ffe1e1;color:#8f2c2c}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:12px;margin-bottom:16px}.stat{background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:14px}.stat strong{display:block;font-size:30px}
+.grid-form{display:grid;grid-template-columns:repeat(4,minmax(160px,1fr));gap:12px;align-items:end}.grid-form label,.login label{display:grid;gap:8px;font-weight:700}.grid-form input,.grid-form select,.login input{width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;background:#fff}
+.password-field{position:relative;display:grid}.password-field input{padding-right:58px}.password-toggle{position:absolute;right:8px;top:50%;transform:translateY(-50%);border:0;border-radius:8px;background:#eef7ff;color:var(--deep);height:32px;min-width:38px;font-weight:800;cursor:pointer}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:8px}table{width:100%;border-collapse:collapse;min-width:900px}th,td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{background:#f3f8fc;position:sticky;top:0}.muted{color:var(--muted)}.hidden{display:none!important}.login{max-width:480px;margin:40px auto}.row-actions{display:flex;gap:8px;flex-wrap:wrap}.status{min-height:24px;font-weight:700}
+@media(max-width:860px){.topbar{align-items:flex-start;flex-direction:column}.stats,.grid-form{grid-template-columns:1fr}.toolbar .btn{flex:1}}
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <img src="assets/logo-nursing.png" alt="โลโก้">
+      <div>
+        <h1>ARD Admin Dashboard</h1>
+        <div class="muted" id="who">ยังไม่ได้เข้าสู่ระบบ</div>
+      </div>
+    </div>
+    <div class="toolbar">
+      <a class="btn" href="index.html">กลับหน้าเว็บ</a>
+      <button class="btn pink" id="logoutBtn" type="button">ออกจากระบบ</button>
+    </div>
+  </header>
+  <main>
+    <section class="panel login" id="loginPanel">
+      <h2>เข้าสู่ระบบแอดมิน</h2>
+      <label>อีเมล<input id="email" type="email" value="ardumfu@gmail.com" autocomplete="email"></label>
+      <label>รหัสผ่าน
+        <div class="password-field">
+          <input id="password" type="password" autocomplete="current-password">
+          <button class="password-toggle" id="adminPasswordToggle" type="button" aria-label="แสดงรหัสผ่าน">👁</button>
+        </div>
+      </label>
+      <button class="btn primary" id="loginBtn" type="button">เข้าสู่ระบบ</button>
+      <p class="muted status" id="msg"></p>
+    </section>
+    <section class="hidden" id="dash">
+      <div class="stats">
+        <div class="stat"><span>ผู้ส่งแบบสอบถาม</span><strong id="surveyCount">0</strong></div>
+        <div class="stat"><span>คะแนนเกม</span><strong id="scoreCount">0</strong></div>
+        <div class="stat"><span>คะแนนรวมเฉลี่ย</span><strong id="avgScore">0</strong></div>
+        <div class="stat"><span>รายการทั้งหมด</span><strong id="totalRows">0</strong></div>
+      </div>
+      <div class="panel">
+        <h2>จัดการสมาชิก</h2>
+        <p class="muted">เพิ่ม แก้ไข หรือลบสมาชิกในระบบ บัญชีทั่วไปควรใช้อีเมล @mfu.ac.th หรือ @lamduan.mfu.ac.th</p>
+        <input id="memberId" type="hidden">
+        <div class="grid-form">
+          <label>อีเมลสมาชิก<input id="memberEmail" type="email" placeholder="name@mfu.ac.th"></label>
+          <label>รหัสผ่าน
+            <div class="password-field">
+              <input id="memberPassword" type="password" placeholder="ใส่เมื่อเพิ่มหรือเปลี่ยนรหัส">
+              <button class="password-toggle" id="memberPasswordToggle" type="button" aria-label="แสดงรหัสผ่าน">👁</button>
+            </div>
+          </label>
+          <label>สิทธิ์<select id="memberRole"><option value="student">ผู้เรียน</option><option value="admin">แอดมิน</option></select></label>
+          <div class="toolbar"><button class="btn primary" id="memberSave" type="button">เพิ่มสมาชิก</button><button class="btn lav" id="memberClear" type="button">ล้างฟอร์ม</button></div>
+        </div>
+        <div class="toolbar"><button class="btn mint" id="memberRefresh" type="button">รีเฟรชสมาชิก</button></div>
+        <p class="muted status" id="memberMsg"></p>
+        <div class="table-wrap"><table><thead><tr><th>อีเมล</th><th>สิทธิ์</th><th>ยืนยันอีเมล</th><th>เข้าใช้ล่าสุด</th><th>จัดการ</th></tr></thead><tbody id="memberBody"></tbody></table></div>
+      </div>
+      <div class="panel">
+        <h2>แบบสอบถามและควิช</h2>
+        <div class="toolbar">
+          <button class="btn primary" id="refreshBtn" type="button">รีเฟรชข้อมูล</button>
+          <button class="btn mint" id="surveyCsv" type="button">ดาวน์โหลด Survey CSV</button>
+          <button class="btn mint" id="surveyXls" type="button">ดาวน์โหลด Survey Excel</button>
+          <button class="btn pink" id="scoreCsv" type="button">ดาวน์โหลด Scores CSV</button>
+        </div>
+        <div class="table-wrap"><table><thead id="surveyHead"></thead><tbody id="surveyBody"></tbody></table></div>
+      </div>
+      <div class="panel">
+        <h2>คะแนนเกม</h2>
+        <div class="table-wrap"><table><thead><tr><th>เวลา</th><th>อีเมล</th><th>เกม</th><th>คะแนน</th><th>ดาว</th></tr></thead><tbody id="scoreBody"></tbody></table></div>
+      </div>
+    </section>
+  </main>
+  <script src="admin-dashboard-inline.js" charset="utf-8"></script>
+</body>
+</html>

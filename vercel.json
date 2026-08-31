@@ -1,0 +1,9 @@
+{
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "routes": [
+    { "src": "^/questionnaire/?$", "dest": "/index.html" },
+    { "src": "^/admin-dashboard/?$", "dest": "/admin-dashboard.html" },
+    { "handle": "filesystem" }
+  ]
+}
