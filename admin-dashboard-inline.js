@@ -113,7 +113,6 @@ function flatSurvey(s){
   const p=s.profile||{}, row={id:s.id,created_at:s.created_at,email:s.email,age:p.age||'',year:p.year||'',gpa:p.gpa||'',medAdminExp:p.medAdminExp||'',wardExp:p.wardExp||'',quiz_score:s.quiz_score??'',quiz_total:s.quiz_total??'',quiz_percent:s.quiz_percent??'',game_score_text:s.game_score_text||'',game_stars_text:s.game_stars_text||'',suggestion:s.suggestion||''};
   Object.entries(s.confidence||{}).forEach(([k,v])=>row['confidence_'+(Number(k)+1)]=v);
   Object.entries(s.knowledge||{}).forEach(([k,v])=>row['knowledge_'+(Number(k)+1)]=v);
-  Object.entries(s.satisfaction||{}).forEach(([g,obj])=>Object.entries(obj||{}).forEach(([d,v])=>{row['satisfaction_g'+(Number(g)+1)+'_'+(Number(d)+1)]=v;}));
   return row;
 }
 function renderSurveyTable(){
