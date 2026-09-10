@@ -66,7 +66,7 @@ const surveyData={
     {
       "text": "ยา  Clindamycin จัดอยู่ในกลุ่มใด",
       "choices": [
-        "1.Lacosamide",
+        "1.Lincosamide",
         "2.Sulfonamide",
         "3.Beta lactams",
         "4.Fluoroquinolone"
@@ -507,7 +507,7 @@ const surveyData={
   ],
   "knowledgeAnswerKey": [
     "3.Azithromycin",
-    "1.Lacosamide",
+    "1.Lincosamide",
     "ยับยั้งการสร้างผนังเซลล์โดยยับยั้งการทำงานของเอนไซม์ transpeptidase และการสร้าง peptidoglycan",
     "ยับยั้งการสร้างผนังเซลล์โดยจับกับส่วนปลายของD-Ala-D-Ala",
     "Metronidazole",
