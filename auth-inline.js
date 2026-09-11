@@ -3,7 +3,7 @@ const cfg = window.ARD_SUPABASE_CONFIG || {};
 const ready = cfg.url && cfg.anonKey && !cfg.url.includes('YOUR_PROJECT_REF') && !cfg.anonKey.includes('YOUR_SUPABASE_ANON_KEY');
 const client = ready && window.supabase ? window.supabase.createClient(cfg.url, cfg.anonKey) : null;
 const adminEmail = (cfg.adminEmail || 'ardumfu@gmail.com').toLowerCase();
-const allowedDomains = cfg.allowedDomains || ['mfu.ac.th','lamduan.mfu.ac.th'];
+const allowedDomains = cfg.allowedDomains || ['lamduan.mfu.ac.th'];
 let session = null;
 let profile = null;
 window.ARD_AUTH_ONLY_SURVEY = true;
@@ -22,7 +22,7 @@ function bindPasswordToggle(buttonId,inputId){
 }
 function renderAuth(message){
   const host=$('authPanel'); if(!host)return;
-  host.innerHTML='<div class="auth-card"><img src="assets/logo-nursing.png" alt="โลโก้"><div><p class="eyebrow">ARD Learning Game</p><h1>เข้าสู่ระบบเพื่อเข้าเล่นเกม</h1><p>สมัครและเข้าใช้งานได้ด้วยอีเมล @mfu.ac.th หรือ @lamduan.mfu.ac.th เท่านั้น</p></div><label>อีเมล<input id="authEmail" type="email" autocomplete="email" placeholder="name@mfu.ac.th"></label><label>รหัสผ่าน<div class="password-field"><input id="authPassword" type="password" autocomplete="current-password" placeholder="อย่างน้อย 6 ตัวอักษร"><button class="password-toggle" id="authPasswordToggle" type="button" aria-label="แสดงรหัสผ่าน">👁</button></div></label><div class="auth-actions"><button class="primary" id="loginBtn" type="button">เข้าสู่ระบบ</button><button class="secondary" id="signupBtn" type="button">สมัครสมาชิก</button></div><button class="secondary google-login" id="googleLoginBtn" type="button">เข้าสู่ระบบด้วย Google</button><button class="secondary" id="publicSurveyBtn" type="button">ทำแบบสอบถามโดยไม่ต้องเข้าสู่ระบบ</button><p class="auth-status" id="authStatus">'+(message||'')+'</p>'+(ready?'':'<div class="survey-warning">ยังไม่ได้ตั้งค่า Supabase URL/Anon key ในไฟล์ supabase-config.js</div>')+'</div>';
+  host.innerHTML='<div class="auth-card"><img src="assets/logo-nursing.png" alt="โลโก้"><div><p class="eyebrow">ARD Learning Game</p><h1>เข้าสู่ระบบเพื่อเข้าเล่นเกม</h1><p>สมัครและเข้าใช้งานได้ด้วยอีเมล @lamduan.mfu.ac.th เท่านั้น</p></div><label>อีเมล<input id="authEmail" type="email" autocomplete="email" placeholder="name@lamduan.mfu.ac.th"></label><label>รหัสผ่าน<div class="password-field"><input id="authPassword" type="password" autocomplete="current-password" placeholder="อย่างน้อย 6 ตัวอักษร"><button class="password-toggle" id="authPasswordToggle" type="button" aria-label="แสดงรหัสผ่าน">👁</button></div></label><div class="auth-actions"><button class="primary" id="loginBtn" type="button">เข้าสู่ระบบ</button><button class="secondary" id="signupBtn" type="button">สมัครสมาชิก</button></div><button class="secondary google-login" id="googleLoginBtn" type="button">เข้าสู่ระบบด้วย Google</button><button class="secondary" id="publicSurveyBtn" type="button">ทำแบบสอบถามโดยไม่ต้องเข้าสู่ระบบ</button><p class="auth-status" id="authStatus">'+(message||'')+'</p>'+(ready?'':'<div class="survey-warning">ยังไม่ได้ตั้งค่า Supabase URL/Anon key ในไฟล์ supabase-config.js</div>')+'</div>';
   bindPasswordToggle('authPasswordToggle','authPassword'); $('loginBtn').onclick=()=>login(); $('signupBtn').onclick=()=>signup(); $('googleLoginBtn').onclick=()=>loginWithGoogle(); $('publicSurveyBtn').onclick=showPublicSurvey;
 }
 async function loadProfile(){
@@ -34,7 +34,7 @@ async function refresh(){
   if(!client){renderAuth('');show('auth');return;}
   const {data} = await client.auth.getSession(); session=data.session;
   if(!session){if(location.pathname==='/questionnaire'){showPublicSurvey();return;}renderAuth('');show('auth');return;}
-  if(!isAllowedEmail(session.user.email)){await client.auth.signOut();session=null;profile=null;renderAuth('ใช้งานได้เฉพาะอีเมล @mfu.ac.th หรือ @lamduan.mfu.ac.th เท่านั้น');show('auth');return;}
+  if(!isAllowedEmail(session.user.email)){await client.auth.signOut();session=null;profile=null;renderAuth('ใช้งานได้เฉพาะอีเมล @lamduan.mfu.ac.th เท่านั้น');show('auth');return;}
   await loadProfile();
   setText('userEmail', session.user.email || '');
   const adminLink=$('adminDashboardLink'); if(adminLink)adminLink.hidden=!isAdmin();
@@ -43,14 +43,14 @@ async function refresh(){
 }
 async function login(){
   const email=$('authEmail').value.trim().toLowerCase(), password=$('authPassword').value;
-  if(!isAllowedEmail(email)){setText('authStatus','ใช้งานได้เฉพาะอีเมล @mfu.ac.th หรือ @lamduan.mfu.ac.th');return;}
+  if(!isAllowedEmail(email)){setText('authStatus','ใช้งานได้เฉพาะอีเมล @lamduan.mfu.ac.th เท่านั้น');return;}
   const {data,error}=await client.auth.signInWithPassword({email,password});
   if(error){setText('authStatus',error.message);return;}
   session=data.session; await refresh();
 }
 async function signup(){
   const email=$('authEmail').value.trim().toLowerCase(), password=$('authPassword').value;
-  if(!isAllowedEmail(email)){setText('authStatus','สมัครได้เฉพาะอีเมล @mfu.ac.th หรือ @lamduan.mfu.ac.th');return;}
+  if(!isAllowedEmail(email)){setText('authStatus','สมัครได้เฉพาะอีเมล @lamduan.mfu.ac.th เท่านั้น');return;}
   const {error}=await client.auth.signUp({email,password});
   if(error){setText('authStatus',error.message);return;}
   setText('authStatus','สมัครสำเร็จ กรุณาตรวจอีเมลเพื่อยืนยันบัญชี หากระบบตั้งค่าให้ยืนยันอีเมล');

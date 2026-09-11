@@ -1,7 +1,7 @@
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://wsruzvfatifqifpyosvx.supabase.co';
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ADMIN_EMAIL = 'ardumfu@gmail.com';
-const ALLOWED_DOMAINS = ['mfu.ac.th', 'lamduan.mfu.ac.th'];
+const ALLOWED_DOMAINS = ['lamduan.mfu.ac.th'];
 
 function send(res, status, body) {
   res.statusCode = status;
@@ -105,7 +105,7 @@ module.exports = async function handler(req, res) {
       const email = String(body.email || '').trim().toLowerCase();
       const password = String(body.password || '');
       const role = body.role === 'admin' ? 'admin' : 'student';
-      if (!allowedEmail(email)) return send(res, 400, { error: 'อีเมลต้องเป็น @mfu.ac.th หรือ @lamduan.mfu.ac.th เท่านั้น' });
+      if (!allowedEmail(email)) return send(res, 400, { error: 'อีเมลต้องเป็น @lamduan.mfu.ac.th เท่านั้น' });
       if (password.length < 6) return send(res, 400, { error: 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร' });
       const result = await supabase('/auth/v1/admin/users', {
         method: 'POST',
@@ -122,7 +122,7 @@ module.exports = async function handler(req, res) {
       const password = String(body.password || '');
       const role = body.role === 'admin' ? 'admin' : 'student';
       if (!id) return send(res, 400, { error: 'ไม่พบรหัสสมาชิก' });
-      if (!allowedEmail(email)) return send(res, 400, { error: 'อีเมลต้องเป็น @mfu.ac.th หรือ @lamduan.mfu.ac.th เท่านั้น' });
+      if (!allowedEmail(email)) return send(res, 400, { error: 'อีเมลต้องเป็น @lamduan.mfu.ac.th เท่านั้น' });
       const payload = { email, user_metadata: { role } };
       if (password) payload.password = password;
       const result = await supabase('/auth/v1/admin/users/' + encodeURIComponent(id), {

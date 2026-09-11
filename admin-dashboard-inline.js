@@ -14,7 +14,7 @@ function bindPasswordToggle(buttonId,inputId){
 }
 function allowedMemberEmail(email){
   const e=String(email||'').toLowerCase();
-  return e===adminEmail || e.endsWith('@mfu.ac.th') || e.endsWith('@lamduan.mfu.ac.th');
+  return e===adminEmail || e.endsWith('@lamduan.mfu.ac.th');
 }
 async function login(){
   if(!client){msg('ยังไม่ได้ตั้งค่า Supabase ใน supabase-config.js');return;}
@@ -88,7 +88,7 @@ function clearMemberForm(){
 async function saveMember(){
   const id=$('memberId').value, email=$('memberEmail').value.trim().toLowerCase(), password=$('memberPassword').value, role=$('memberRole').value;
   if(!email){memberMsg('กรุณากรอกอีเมล');return;}
-  if(!allowedMemberEmail(email)){memberMsg('อีเมลสมาชิกต้องเป็น @mfu.ac.th หรือ @lamduan.mfu.ac.th เท่านั้น ยกเว้นอีเมลแอดมิน');return;}
+  if(!allowedMemberEmail(email)){memberMsg('อีเมลสมาชิกต้องเป็น @lamduan.mfu.ac.th เท่านั้น ยกเว้นอีเมลแอดมิน');return;}
   if(!id && password.length<6){memberMsg('กรุณาตั้งรหัสผ่านอย่างน้อย 6 ตัวอักษร');return;}
   try{
     memberMsg('กำลังบันทึกสมาชิก...');

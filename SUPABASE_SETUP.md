@@ -15,7 +15,7 @@ window.ARD_SUPABASE_CONFIG = {
   url: 'https://PROJECT_REF.supabase.co',
   anonKey: 'ANON_PUBLIC_KEY',
   adminEmail: 'ardumfu@gmail.com',
-  allowedDomains: ['mfu.ac.th', 'lamduan.mfu.ac.th'],
+  allowedDomains: ['lamduan.mfu.ac.th'],
   productionDomain: 'a-rdu-game.vercel.app'
 };
 ```
@@ -45,7 +45,7 @@ on conflict (id) do update set role = 'admin';
 
 ระบบจำกัด 2 ชั้น:
 
-- ฝั่งหน้าเว็บตรวจเฉพาะ `@mfu.ac.th` และ `@lamduan.mfu.ac.th`
+- ฝั่งหน้าเว็บตรวจเฉพาะ `@lamduan.mfu.ac.th`
 - ฝั่งฐานข้อมูล trigger ใน `supabase-schema.sql` ปฏิเสธอีเมลนอกโดเมนนี้
 
 Admin `ardumfu@gmail.com` ได้รับอนุญาตเป็นกรณีพิเศษ

@@ -64,9 +64,8 @@ declare
   user_email text := lower(coalesce(new.email,''));
 begin
   if user_email <> 'ardumfu@gmail.com'
-     and user_email not like '%@mfu.ac.th'
      and user_email not like '%@lamduan.mfu.ac.th' then
-    raise exception 'Only @mfu.ac.th and @lamduan.mfu.ac.th email addresses can register.';
+    raise exception 'Only @lamduan.mfu.ac.th email addresses can register.';
   end if;
 
   insert into public.user_profiles(id,email,role)
