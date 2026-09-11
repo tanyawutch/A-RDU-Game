@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>วีดิโอการสอน | ARD Learning Game</title>
+  <style>
+@import url('https://fonts.googleapis.com/css2?family=Mali:wght@400;500;700;800&display=swap');
+:root{--deep:#123760;--blue:#1760a8;--line:#d5e4f0;--ink:#173049;--muted:#6a7c8f;--mint:#dff3e8;--pink:#f9dce9;--lav:#eee4ff;--cream:#fff7dd;--soft:#f6fbff;--shadow:0 20px 55px rgba(23,48,73,.16)}
+*{box-sizing:border-box}body{margin:0;font-family:"Mali","Segoe UI",Tahoma,sans-serif;color:var(--ink);background:linear-gradient(180deg,#eef9ff 0%,#fff8fc 58%,#f4fbf6 100%);font-size:16px;line-height:1.5}button,a{font:inherit}a{text-decoration:none}img{max-width:100%}
+.topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px clamp(14px,3vw,36px);background:#fff;border-bottom:1px solid var(--line);box-shadow:0 8px 24px rgba(23,48,73,.08)}
+.brand{display:flex;align-items:center;gap:12px;color:var(--deep);text-align:left}.brand img{width:54px;height:54px;border-radius:50%;object-fit:contain;box-shadow:0 6px 18px rgba(23,48,73,.14)}.brand strong{display:block;font-size:clamp(18px,2vw,24px);line-height:1.15}.brand small{display:block;color:var(--muted);font-weight:500}
+.top-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.primary,.secondary{display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:8px;padding:11px 16px;font-weight:800}.primary{background:var(--blue);border-color:var(--blue);color:#fff}.secondary{background:var(--lav);color:#5a4775}
+main{width:min(1180px,calc(100% - 28px));margin:0 auto;padding:26px 0 34px}.video-hero{border-radius:8px;background:linear-gradient(120deg,rgba(23,96,168,.92),rgba(118,195,225,.68));padding:clamp(26px,5vw,54px);color:#fff;box-shadow:var(--shadow)}.eyebrow{margin:0 0 8px;font-weight:800}.video-hero h1{margin:0;font-size:clamp(34px,5vw,60px);line-height:1.08}.video-hero p{font-size:clamp(17px,2vw,22px);margin:14px 0 0;max-width:800px}
+.video-shell{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:18px;margin-top:18px}.player-card,.playlist-card{background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);padding:18px}.video-frame{position:relative;overflow:hidden;border-radius:8px;background:#101f35;aspect-ratio:16/9;border:1px solid #0b1728}.video-frame video{width:100%;height:100%;display:block;background:#101f35}.video-frame .empty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;color:#fff;padding:18px;font-weight:800}.current-title{margin:14px 0 4px;color:var(--deep);font-size:clamp(24px,3vw,36px)}.current-note{margin:0;color:var(--muted);font-weight:700}
+.playlist-card h2{margin:0 0 12px;color:var(--deep)}.playlist{display:grid;gap:10px}.video-item{display:grid;grid-template-columns:42px 1fr;gap:12px;align-items:center;width:100%;border:1px solid var(--line);border-radius:8px;background:#fbfdff;padding:12px;text-align:left;color:var(--ink);font-weight:800;cursor:pointer}.video-item:hover{background:#eef7ff;border-color:#9bc8ee}.video-item.active{background:#fff1f8;border-color:#f1cfe0}.play-dot{display:grid;place-items:center;width:42px;height:42px;border-radius:50%;background:var(--mint);color:#235b3e;font-weight:900}.video-item.active .play-dot{background:var(--pink);color:#5f3f55}.video-item small{display:block;color:var(--muted);font-weight:700}
+.video-status{margin-top:12px;border:1px solid var(--line);border-radius:8px;background:var(--soft);padding:12px;color:var(--muted);font-weight:700}.footer{margin-top:24px;background:#fff;border-top:1px solid var(--line);padding:18px clamp(14px,3vw,36px);color:var(--muted)}.footer-inner{width:min(1180px,100%);margin:0 auto;display:flex;justify-content:space-between;gap:16px;align-items:center}.footer-brand{display:flex;gap:10px;align-items:center;color:var(--deep)}.footer-brand img{width:44px;height:44px;border-radius:50%;object-fit:contain}
+@media(max-width:860px){.topbar{align-items:flex-start;flex-direction:column}.video-shell{grid-template-columns:1fr}.playlist-card{order:-1}.footer-inner{align-items:flex-start;flex-direction:column}}
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="index.html"><img src="assets/logo-nursing.png" alt="โลโก้คณะพยาบาลศาสตร์"><span><strong>วีดิโอการสอน</strong><small>ARD Learning Game</small></span></a>
+    <div class="top-actions"><a class="secondary" href="index.html">กลับหน้าเลือกเกม</a><a class="primary" href="questionnaire">แบบสอบถาม</a></div>
+  </header>
+  <main>
+    <section class="video-hero">
+      <p class="eyebrow">สื่อประกอบการเรียน</p>
+      <h1>วีดิโอการสอน</h1>
+      <p>เลือกดูคลิปตามลำดับ คลิปจะเล่นบนหน้าเว็บโดยไม่ต้องออกจากระบบเกม</p>
+    </section>
+    <section class="video-shell">
+      <article class="player-card">
+        <div class="video-frame"><video id="lessonVideo" controls playsinline preload="metadata"></video><div class="empty" id="videoEmpty">เลือกคลิปจากเพลย์ลิสต์ด้านข้างเพื่อเริ่มดูวีดิโอ</div></div>
+        <h2 class="current-title" id="currentTitle">คลิปที่ 1</h2>
+        <p class="current-note" id="currentNote">วีดิโอประกอบการเรียนรู้กลุ่มยาปฏิชีวนะ</p>
+        <div class="video-status" id="videoStatus">กำลังเตรียมเพลย์ลิสต์จาก Supabase Storage</div>
+      </article>
+      <aside class="playlist-card">
+        <h2>เพลย์ลิสต์</h2>
+        <div class="playlist" id="playlist"></div>
+      </aside>
+    </section>
+  </main>
+  <footer class="footer"><div class="footer-inner"><div class="footer-brand"><img src="assets/logo-nursing.png" alt="โลโก้"><div><strong>School of Nursing, Mae Fah Luang University</strong><br><span>Antibiotics Learning Games</span></div></div><div>© 2026 School of Nursing, Mae Fah Luang University in collaboration with MFU Learning Innovation Institute. All rights reserved.</div></div></footer>
+  <script src="supabase-config.js" charset="utf-8"></script>
+  <script src="videos-inline.js" charset="utf-8"></script>
+</body>
+</html>
