@@ -1,9 +1,14 @@
 .vercel/
 .env
 .env.*
+!.env.example
 node_modules/
 dist/
 build/
 *.log
 Thumbs.db
 desktop.ini
+
+.vercel
+.env*
+!.env.example

@@ -1,6 +1,6 @@
 # ARD Supabase Setup
 
-ไฟล์เว็บอยู่ที่ `C:\inetpub\wwwroot\ARD` และตั้งค่าให้ใช้โดเมน `a-rdugame-mfu.com`
+ไฟล์เว็บอยู่ที่ `C:\inetpub\wwwroot\ARD` และ production ปัจจุบันใช้ `https://a-rdu-game.vercel.app`
 
 ## 1. สร้าง Supabase Project
 
@@ -16,7 +16,7 @@ window.ARD_SUPABASE_CONFIG = {
   anonKey: 'ANON_PUBLIC_KEY',
   adminEmail: 'ardumfu@gmail.com',
   allowedDomains: ['mfu.ac.th', 'lamduan.mfu.ac.th'],
-  productionDomain: 'a-rdugame-mfu.com'
+  productionDomain: 'a-rdu-game.vercel.app'
 };
 ```
 
@@ -50,14 +50,22 @@ on conflict (id) do update set role = 'admin';
 
 Admin `ardumfu@gmail.com` ได้รับอนุญาตเป็นกรณีพิเศษ
 
-## 4. ตั้งค่า Auth URL
+## 4. ตั้งค่า Auth URL และ Google OAuth
 
 ใน Supabase ไปที่ Authentication > URL Configuration
 
-- Site URL: `https://a-rdugame-mfu.com`
+- Site URL: `https://a-rdu-game.vercel.app`
 - Redirect URLs:
-  - `https://a-rdugame-mfu.com/*`
+  - `https://a-rdu-game.vercel.app/*`
+  - `http://127.0.0.1:8088/*` สำหรับทดสอบ local server
   - `http://10.1.134.171/ARD/*` สำหรับทดสอบในวง LAN
+
+ใน Google Cloud Console ให้เพิ่ม Authorized redirect URI ของ Supabase:
+
+- Production: `https://wsruzvfatifqifpyosvx.supabase.co/auth/v1/callback`
+- Local Supabase dev: `http://127.0.0.1:54321/auth/v1/callback`
+
+จากนั้นนำ `GOOGLE_CLIENT_ID` และ `GOOGLE_CLIENT_SECRET` ไปใส่ใน Supabase ที่ Authentication > Providers > Google
 
 ## 5. ตั้งค่า IIS และโดเมน
 
@@ -74,7 +82,7 @@ Admin `ardumfu@gmail.com` ได้รับอนุญาตเป็นกร
 
 ## 6. สถานะการเปิดใช้งานตอนนี้
 
-หน้าเล่นเกมถูกล็อกไว้สำหรับผู้ใช้ทั่วไปตามที่ต้องการ ผู้ใช้ทั่วไปจะเห็นและทำแบบสอบถามก่อน ส่วน admin ยังเข้าเลือกเกมและหลังบ้านได้
+หน้าแบบสอบถาม `/questionnaire` เปิดให้คนทั่วไปทำได้โดยไม่ต้องล็อกอิน ส่วนหน้าเลือกเกมและเกมต่าง ๆ เปิดให้ผู้เรียนที่ล็อกอินแล้ว และ admin เข้าเล่นได้
 
 ## 7. คะแนนควิช
 
