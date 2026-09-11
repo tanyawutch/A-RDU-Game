@@ -33,7 +33,7 @@ function bindVideo(){
   const video=$('lessonVideo'),status=$('videoStatus'),empty=$('videoEmpty');
   if(!video)return;
   video.addEventListener('loadedmetadata',()=>{status.textContent='พร้อมดูวีดิโอแล้ว';});
-  video.addEventListener('error',()=>{status.textContent='ยังเปิดวีดิโอไม่ได้ กรุณาตรวจสอบว่าไฟล์ใน Supabase Storage เป็น public และชื่อไฟล์ตรงกับ '+bucket+'/'+(playlist.find(item=>item.url===video.src)?.file||'1.mp4');empty.hidden=false;});
+  video.addEventListener('error',()=>{const item=playlist.find(item=>item.url===video.src)||playlist[0];status.textContent='ยังเปิดวีดิโอไม่ได้ กรุณาตรวจสอบว่าไฟล์ใน Supabase Storage เปิดอ่านได้ และชื่อไฟล์ตรงกับ '+bucket+'/'+(item?.file||'AntiBiotics 01.mp4');empty.hidden=false;});
   video.addEventListener('ended',()=>{const current=playlist.findIndex(item=>item.url===video.src);if(current>=0&&current<playlist.length-1)selectVideo(current+1,false);});
 }
 document.addEventListener('DOMContentLoaded',async()=>{await loadPlaylist();renderPlaylist();bindVideo();selectVideo(0,false);});

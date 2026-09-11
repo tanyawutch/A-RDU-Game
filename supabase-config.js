@@ -5,5 +5,5 @@ window.ARD_SUPABASE_CONFIG = {
   allowedDomains: ['mfu.ac.th', 'lamduan.mfu.ac.th'],
   productionDomain: 'a-rdu-game.vercel.app',
   videoBucket: 'VIdeo',
-  videoFiles: ['1.mp4', '2.mp4', '3.mp4', '4.mp4']
+  videoFiles: ['AntiBiotics 01.mp4', 'AntiBiotics 02.mp4', 'AntiBiotics 03.mp4', 'AntiBiotics 04.mp4']
 };

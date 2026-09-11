@@ -65,7 +65,8 @@ async function signedUrl(path) {
     method: 'POST',
     body: JSON.stringify({ expiresIn: 7200 })
   });
-  return SUPABASE_URL + data.signedURL;
+  const signedPath = data.signedURL || '';
+  return SUPABASE_URL + (signedPath.startsWith('/storage/v1') ? signedPath : '/storage/v1' + signedPath);
 }
 
 module.exports = async function handler(req, res) {
