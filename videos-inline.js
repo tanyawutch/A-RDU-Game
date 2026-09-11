@@ -19,21 +19,18 @@ function renderPlaylist(){
   host.querySelectorAll('.video-item').forEach(btn=>btn.onclick=()=>selectVideo(Number(btn.dataset.index),true));
 }
 function selectVideo(index,autoplay){
-  const item=playlist[index]||playlist[0],video=$('lessonVideo'),empty=$('videoEmpty'),status=$('videoStatus');
+  const item=playlist[index]||playlist[0],video=$('lessonVideo');
   document.querySelectorAll('.video-item').forEach((btn,i)=>btn.classList.toggle('active',i===index));
   $('currentTitle').textContent=item.title;
   $('currentNote').textContent='วีดิโอประกอบการเรียนรู้กลุ่มยาปฏิชีวนะ';
-  status.textContent='กำลังโหลด '+item.title;
-  empty.hidden=true;
   video.src=item.url;
   video.load();
   if(autoplay)video.play().catch(()=>{});
 }
 function bindVideo(){
-  const video=$('lessonVideo'),status=$('videoStatus'),empty=$('videoEmpty');
+  const video=$('lessonVideo');
   if(!video)return;
-  video.addEventListener('loadedmetadata',()=>{status.textContent='พร้อมดูวีดิโอแล้ว';});
-  video.addEventListener('error',()=>{const item=playlist.find(item=>item.url===video.src)||playlist[0];status.textContent='ยังเปิดวีดิโอไม่ได้ กรุณาตรวจสอบว่าไฟล์ใน Supabase Storage เปิดอ่านได้ และชื่อไฟล์ตรงกับ '+bucket+'/'+(item?.file||'AntiBiotics 01.mp4');empty.hidden=false;});
+  video.addEventListener('error',()=>{console.warn('Video load failed',video.currentSrc||video.src);});
   video.addEventListener('ended',()=>{const current=playlist.findIndex(item=>item.url===video.src);if(current>=0&&current<playlist.length-1)selectVideo(current+1,false);});
 }
 document.addEventListener('DOMContentLoaded',async()=>{await loadPlaylist();renderPlaylist();bindVideo();selectVideo(0,false);});
