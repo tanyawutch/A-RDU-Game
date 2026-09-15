@@ -15,7 +15,7 @@ main{width:min(1240px,calc(100% - 28px));margin:0 auto;padding:24px 0 32px}.pane
 .stats{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:12px;margin-bottom:16px}.stat{background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:14px}.stat strong{display:block;font-size:30px}
 .grid-form{display:grid;grid-template-columns:repeat(4,minmax(160px,1fr));gap:12px;align-items:end}.grid-form label,.login label{display:grid;gap:8px;font-weight:700}.grid-form input,.grid-form select,.login input{width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;background:#fff}
 .password-field{position:relative;display:grid}.password-field input{padding-right:58px}.password-toggle{position:absolute;right:8px;top:50%;transform:translateY(-50%);border:0;border-radius:8px;background:#eef7ff;color:var(--deep);height:32px;min-width:38px;font-weight:800;cursor:pointer}
-.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:8px}table{width:100%;border-collapse:collapse;min-width:900px}th,td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{background:#f3f8fc;position:sticky;top:0}.muted{color:var(--muted)}.hidden{display:none!important}.login{max-width:480px;margin:40px auto}.row-actions{display:flex;gap:8px;flex-wrap:wrap}.status{min-height:24px;font-weight:700}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:8px}table{width:100%;border-collapse:collapse;min-width:900px}th,td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{background:#f3f8fc;position:sticky;top:0}.muted{color:var(--muted)}.hidden{display:none!important}.login{max-width:480px;margin:40px auto}.row-actions{display:flex;gap:8px;flex-wrap:wrap}.status{min-height:24px;font-weight:700}.pager{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:10px}.pager-info{color:var(--muted);font-weight:700}.pager-actions{display:flex;gap:8px;flex-wrap:wrap}.pager .btn{padding:8px 12px}.pager .btn[disabled]{opacity:.48;cursor:not-allowed}
 @media(max-width:860px){.topbar{align-items:flex-start;flex-direction:column}.stats,.grid-form{grid-template-columns:1fr}.toolbar .btn{flex:1}}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -73,6 +73,7 @@ main{width:min(1240px,calc(100% - 28px));margin:0 auto;padding:24px 0 32px}.pane
         <div class="toolbar"><button class="btn mint" id="memberRefresh" type="button">รีเฟรชสมาชิก</button></div>
         <p class="muted status" id="memberMsg"></p>
         <div class="table-wrap"><table><thead><tr><th>อีเมล</th><th>สิทธิ์</th><th>ยืนยันอีเมล</th><th>จำนวนครั้งเข้าใช้งาน</th><th>เข้าใช้ล่าสุด</th><th>จัดการ</th></tr></thead><tbody id="memberBody"></tbody></table></div>
+        <div class="pager" id="memberPager"></div>
       </div>
       <div class="panel">
         <h2>แบบสอบถามและควิช</h2>
@@ -82,11 +83,13 @@ main{width:min(1240px,calc(100% - 28px));margin:0 auto;padding:24px 0 32px}.pane
           <button class="btn mint" id="surveyXls" type="button">ดาวน์โหลด Survey Excel</button>
           <button class="btn pink" id="scoreCsv" type="button">ดาวน์โหลด Scores CSV</button>
         </div>
-        <div class="table-wrap"><table><thead id="surveyHead"></thead><tbody id="surveyBody"></tbody></table></div>
+        <div class="table-wrap"><table id="surveyTable"><thead id="surveyHead"></thead><tbody id="surveyBody"></tbody></table></div>
+        <div class="pager" id="surveyPager"></div>
       </div>
       <div class="panel">
         <h2>คะแนนเกม</h2>
         <div class="table-wrap"><table><thead><tr><th>เวลา</th><th>อีเมล</th><th>เกม</th><th>คะแนน</th><th>ดาว</th></tr></thead><tbody id="scoreBody"></tbody></table></div>
+        <div class="pager" id="scorePager"></div>
       </div>
     </section>
   </main>

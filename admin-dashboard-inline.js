@@ -5,6 +5,8 @@ const client=ready&&window.supabase?window.supabase.createClient(cfg.url,cfg.ano
 const adminEmail=(cfg.adminEmail||'ardumfu@gmail.com').toLowerCase();
 let session=null,surveys=[],scores=[],members=[];
 let trackedSessionId='';
+const pageSize=10;
+const pages={members:1,surveys:1,scores:1};
 const $=id=>document.getElementById(id);
 function esc(v){return String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 function msg(t){$('msg').textContent=t}
@@ -77,10 +79,32 @@ function render(){
   $('avgScore').textContent=avg;
   renderSurveyTable(); renderScoreTable();
 }
+function pageItems(items,key){
+  const totalPages=Math.max(1,Math.ceil(items.length/pageSize));
+  pages[key]=Math.min(Math.max(1,pages[key]||1),totalPages);
+  const start=(pages[key]-1)*pageSize;
+  return {items:items.slice(start,start+pageSize),start,totalPages};
+}
+function renderPager(id,key,total){
+  const pager=$(id); if(!pager)return;
+  const totalPages=Math.max(1,Math.ceil(total/pageSize));
+  pages[key]=Math.min(Math.max(1,pages[key]||1),totalPages);
+  const start=total?(pages[key]-1)*pageSize+1:0;
+  const end=Math.min(total,pages[key]*pageSize);
+  pager.innerHTML='<div class="pager-info">แสดง '+esc(start)+'-'+esc(end)+' จาก '+esc(total)+' รายการ</div><div class="pager-actions"><button class="btn lav" type="button" data-page="'+key+'" data-dir="-1" '+(pages[key]<=1?'disabled':'')+'>ก่อนหน้า</button><button class="btn lav" type="button" data-page="'+key+'" data-dir="1" '+(pages[key]>=totalPages?'disabled':'')+'>ถัดไป</button></div>';
+  pager.querySelectorAll('[data-page]').forEach(btn=>btn.onclick=()=>{
+    pages[key]+=Number(btn.dataset.dir);
+    if(key==='members')renderMembers();
+    if(key==='surveys')renderSurveyTable();
+    if(key==='scores')renderScoreTable();
+  });
+}
 function renderMembers(){
-  $('memberBody').innerHTML=members.map(m=>'<tr><td>'+esc(m.email)+'</td><td>'+esc(roleLabel(m.role))+'</td><td>'+esc(m.email_confirmed_at?'ยืนยันแล้ว':'ยังไม่ยืนยัน')+'</td><td>'+esc(m.login_count||0)+'</td><td>'+esc(formatDate(m.last_sign_in_at))+'</td><td><div class="row-actions"><button class="btn lav" type="button" data-edit="'+esc(m.id)+'">แก้ไข</button><button class="btn danger" type="button" data-delete="'+esc(m.id)+'">ลบ</button></div></td></tr>').join('');
+  const page=pageItems(members,'members');
+  $('memberBody').innerHTML=page.items.map(m=>'<tr><td>'+esc(m.email)+'</td><td>'+esc(roleLabel(m.role))+'</td><td>'+esc(m.email_confirmed_at?'ยืนยันแล้ว':'ยังไม่ยืนยัน')+'</td><td>'+esc(m.login_count||0)+'</td><td>'+esc(formatDate(m.last_sign_in_at))+'</td><td><div class="row-actions"><button class="btn lav" type="button" data-edit="'+esc(m.id)+'">แก้ไข</button><button class="btn danger" type="button" data-delete="'+esc(m.id)+'">ลบ</button></div></td></tr>').join('')||'<tr><td colspan="6">ยังไม่มีข้อมูลสมาชิก</td></tr>';
   document.querySelectorAll('[data-edit]').forEach(btn=>btn.onclick=()=>editMember(btn.dataset.edit));
   document.querySelectorAll('[data-delete]').forEach(btn=>btn.onclick=()=>deleteMember(btn.dataset.delete));
+  renderPager('memberPager','members',members.length);
 }
 function roleLabel(role){return role==='admin'?'แอดมิน':'ผู้เรียน'}
 function formatDate(value){return value?new Date(value).toLocaleString('th-TH'):''}
@@ -126,8 +150,10 @@ function flatSurvey(s){
 function renderSurveyTable(){
   const flat=surveys.map(flatSurvey), headers=Array.from(new Set(flat.flatMap(r=>Object.keys(r))));
   $('surveyHead').innerHTML='<tr>'+headers.map(h=>'<th>'+esc(h)+'</th>').join('')+'<th>จัดการ</th></tr>';
-  $('surveyBody').innerHTML=flat.map((r,i)=>'<tr>'+headers.map(h=>'<td>'+esc(r[h]||'')+'</td>').join('')+'<td><button class="btn danger" type="button" data-survey-delete="'+esc(surveys[i].id)+'">ลบ</button></td></tr>').join('');
+  const page=pageItems(flat,'surveys');
+  $('surveyBody').innerHTML=page.items.map((r,i)=>'<tr>'+headers.map(h=>'<td>'+esc(r[h]||'')+'</td>').join('')+'<td><button class="btn danger" type="button" data-survey-delete="'+esc(surveys[page.start+i].id)+'">ลบ</button></td></tr>').join('')||'<tr><td colspan="'+esc(Math.max(1,headers.length+1))+'">ยังไม่มีข้อมูลแบบสอบถาม</td></tr>';
   document.querySelectorAll('[data-survey-delete]').forEach(btn=>btn.onclick=()=>deleteSurveySubmission(btn.dataset.surveyDelete));
+  renderPager('surveyPager','surveys',surveys.length);
 }
 async function deleteSurveySubmission(id){
   const item=surveys.find(s=>s.id===id);
@@ -140,13 +166,15 @@ async function deleteSurveySubmission(id){
   }catch(e){alert(e.message||String(e));}
 }
 function renderScoreTable(){
-  $('scoreBody').innerHTML=scores.map(s=>'<tr><td>'+esc(s.created_at)+'</td><td>'+esc(s.email)+'</td><td>'+esc(s.game_title||s.game_id)+'</td><td>'+esc(s.score)+'</td><td>'+esc(s.stars)+'</td></tr>').join('');
+  const page=pageItems(scores,'scores');
+  $('scoreBody').innerHTML=page.items.map(s=>'<tr><td>'+esc(s.created_at)+'</td><td>'+esc(s.email)+'</td><td>'+esc(s.game_title||s.game_id)+'</td><td>'+esc(s.score)+'</td><td>'+esc(s.stars)+'</td></tr>').join('')||'<tr><td colspan="5">ยังไม่มีข้อมูลคะแนนเกม</td></tr>';
+  renderPager('scorePager','scores',scores.length);
 }
 function csvCell(v){const s=String(v??'');return /[",\r\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;}
 function toCsv(rows){const headers=Array.from(new Set(rows.flatMap(r=>Object.keys(r))));return '\ufeff'+[headers.join(',')].concat(rows.map(r=>headers.map(h=>csvCell(r[h])).join(','))).join('\r\n');}
 function download(name,content,type){const blob=new Blob([content],{type});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 function toScoreRows(){return scores.map(s=>({created_at:s.created_at,email:s.email,game_id:s.game_id,game_title:s.game_title,score:s.score,stars:s.stars,completed_count:s.completed_count}));}
-function downloadExcel(){const table=document.querySelector('#dash .table-wrap table').outerHTML;download('ard-survey.xls','\ufeff<html><head><meta charset="utf-8"></head><body>'+table+'</body></html>','application/vnd.ms-excel;charset=utf-8');}
+function downloadExcel(){const table=$('surveyTable').outerHTML;download('ard-survey.xls','\ufeff<html><head><meta charset="utf-8"></head><body>'+table+'</body></html>','application/vnd.ms-excel;charset=utf-8');}
 bindPasswordToggle('adminPasswordToggle','password');
 bindPasswordToggle('memberPasswordToggle','memberPassword');
 $('loginBtn').onclick=login;
