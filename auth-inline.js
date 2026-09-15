@@ -23,8 +23,8 @@ function bindPasswordToggle(buttonId,inputId){
 }
 function renderAuth(message){
   const host=$('authPanel'); if(!host)return;
-  host.innerHTML='<div class="auth-card"><img src="assets/logo-nursing.png" alt="โลโก้"><div><p class="eyebrow">ARD Learning Game</p><h1>เข้าสู่ระบบเพื่อเข้าเล่นเกม</h1><p>สมัครและเข้าใช้งานได้ด้วยอีเมล @lamduan.mfu.ac.th เท่านั้น</p></div><label>อีเมล<input id="authEmail" type="email" autocomplete="email" placeholder="name@lamduan.mfu.ac.th"></label><label>รหัสผ่าน<div class="password-field"><input id="authPassword" type="password" autocomplete="current-password" placeholder="อย่างน้อย 6 ตัวอักษร"><button class="password-toggle" id="authPasswordToggle" type="button" aria-label="แสดงรหัสผ่าน">👁</button></div></label><div class="auth-actions"><button class="primary" id="loginBtn" type="button">เข้าสู่ระบบ</button><button class="secondary" id="signupBtn" type="button">สมัครสมาชิก</button></div><button class="secondary google-login" id="googleLoginBtn" type="button">เข้าสู่ระบบด้วย Google</button><button class="secondary" id="publicSurveyBtn" type="button">ทำแบบสอบถามโดยไม่ต้องเข้าสู่ระบบ</button><p class="auth-status" id="authStatus">'+(message||'')+'</p>'+(ready?'':'<div class="survey-warning">ยังไม่ได้ตั้งค่า Supabase URL/Anon key ในไฟล์ supabase-config.js</div>')+'</div>';
-  bindPasswordToggle('authPasswordToggle','authPassword'); $('loginBtn').onclick=()=>login(); $('signupBtn').onclick=()=>signup(); $('googleLoginBtn').onclick=()=>loginWithGoogle(); $('publicSurveyBtn').onclick=showPublicSurvey;
+  host.innerHTML='<div class="auth-card"><img src="assets/logo-nursing.png" alt="โลโก้"><div><p class="eyebrow">ARD Learning Game</p><h1>เข้าสู่ระบบเพื่อเข้าเล่นเกม</h1><p>สมัครและเข้าใช้งานได้ด้วยอีเมล @lamduan.mfu.ac.th เท่านั้น</p></div><label>อีเมล<input id="authEmail" type="email" autocomplete="email" placeholder="name@lamduan.mfu.ac.th"></label><label>รหัสผ่าน<div class="password-field"><input id="authPassword" type="password" autocomplete="current-password" placeholder="อย่างน้อย 6 ตัวอักษร"><button class="password-toggle" id="authPasswordToggle" type="button" aria-label="แสดงรหัสผ่าน">👁</button></div></label><div class="auth-actions"><button class="primary" id="loginBtn" type="button">เข้าสู่ระบบ</button><button class="secondary" id="signupBtn" type="button">สมัครสมาชิก</button></div><button class="secondary google-login" id="googleLoginBtn" type="button">เข้าสู่ระบบด้วย Google</button><p class="auth-status" id="authStatus">'+(message||'')+'</p>'+(ready?'':'<div class="survey-warning">ยังไม่ได้ตั้งค่า Supabase URL/Anon key ในไฟล์ supabase-config.js</div>')+'</div>';
+  bindPasswordToggle('authPasswordToggle','authPassword'); $('loginBtn').onclick=()=>login(); $('signupBtn').onclick=()=>signup(); $('googleLoginBtn').onclick=()=>loginWithGoogle();
 }
 async function loadProfile(){
   if(!client || !session)return null;
@@ -89,7 +89,6 @@ window.saveSurveySubmission = async function(submission){
     satisfaction: submission.satisfaction || {},
     suggestion: submission.suggestion || '',
     game_score_text: submission.score || '',
-    game_stars_text: submission.stars || '',
     payload: submission
   });
   if(error) throw error;
@@ -102,29 +101,9 @@ window.saveGameScore = async function(payload){
     game_id: payload.gameId,
     game_title: payload.gameTitle,
     score: payload.score || 0,
-    stars: payload.stars || 0,
     completed_count: payload.completed || 0,
     payload
   });
-};
-window.saveGameSatisfaction = async function(payload){
-  if(!client || !session) return;
-  const satisfaction={};
-  satisfaction[payload.gameId || 'game']=payload.scores || {};
-  const submission={submittedAt:payload.submittedAt || new Date().toISOString(),type:'game_satisfaction',gameId:payload.gameId,gameTitle:payload.gameTitle,satisfaction,suggestion:payload.suggestion || ''};
-  const {error}=await client.from('survey_submissions').insert({
-    user_id: session.user.id,
-    email: session.user.email,
-    profile: {},
-    confidence: {},
-    knowledge: {},
-    satisfaction,
-    suggestion: payload.suggestion || '',
-    game_score_text: document.getElementById('score')?.textContent || '',
-    game_stars_text: document.getElementById('stars')?.textContent || '',
-    payload: submission
-  });
-  if(error) throw error;
 };
 window.showHome = function(){ if(session){['auth','survey','play'].forEach(id=>$(id)?.classList.remove('active'));$('home')?.classList.add('active');} else {window.showLoginForGames();} };
 window.showSurvey = function(){ showPublicSurvey(); };

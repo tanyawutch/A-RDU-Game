@@ -141,7 +141,7 @@ async function deleteMember(id){
   }catch(e){memberMsg(e.message||String(e));}
 }
 function flatSurvey(s){
-  const p=s.profile||{}, row={id:s.id,created_at:s.created_at,email:s.email,age:p.age||'',year:p.year||'',gpa:p.gpa||'',medAdminExp:p.medAdminExp||'',wardExp:p.wardExp||'',quiz_score:s.quiz_score??'',quiz_total:s.quiz_total??'',quiz_percent:s.quiz_percent??'',game_score_text:s.game_score_text||'',game_stars_text:s.game_stars_text||'',suggestion:s.suggestion||''};
+  const p=s.profile||{}, row={id:s.id,created_at:s.created_at,email:s.email,age:p.age||'',year:p.year||'',gpa:p.gpa||'',medAdminExp:p.medAdminExp||'',wardExp:p.wardExp||'',quiz_score:s.quiz_score??'',quiz_total:s.quiz_total??'',quiz_percent:s.quiz_percent??'',game_score_text:s.game_score_text||'',suggestion:s.suggestion||''};
   Object.entries(s.confidence||{}).forEach(([k,v])=>row['confidence_'+(Number(k)+1)]=v);
   Object.entries(s.knowledge||{}).forEach(([k,v])=>row['knowledge_'+(Number(k)+1)]=v);
   Object.entries(s.satisfaction||{}).forEach(([game,items])=>Object.entries(items||{}).forEach(([k,v])=>{row['satisfaction_'+game+'_'+(Number(k)+1)]=v;}));
@@ -167,13 +167,13 @@ async function deleteSurveySubmission(id){
 }
 function renderScoreTable(){
   const page=pageItems(scores,'scores');
-  $('scoreBody').innerHTML=page.items.map(s=>'<tr><td>'+esc(s.created_at)+'</td><td>'+esc(s.email)+'</td><td>'+esc(s.game_title||s.game_id)+'</td><td>'+esc(s.score)+'</td><td>'+esc(s.stars)+'</td></tr>').join('')||'<tr><td colspan="5">ยังไม่มีข้อมูลคะแนนเกม</td></tr>';
+  $('scoreBody').innerHTML=page.items.map(s=>'<tr><td>'+esc(s.created_at)+'</td><td>'+esc(s.email)+'</td><td>'+esc(s.game_title||s.game_id)+'</td><td>'+esc(s.score)+'</td></tr>').join('')||'<tr><td colspan="4">ยังไม่มีข้อมูลคะแนนเกม</td></tr>';
   renderPager('scorePager','scores',scores.length);
 }
 function csvCell(v){const s=String(v??'');return /[",\r\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;}
 function toCsv(rows){const headers=Array.from(new Set(rows.flatMap(r=>Object.keys(r))));return '\ufeff'+[headers.join(',')].concat(rows.map(r=>headers.map(h=>csvCell(r[h])).join(','))).join('\r\n');}
 function download(name,content,type){const blob=new Blob([content],{type});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
-function toScoreRows(){return scores.map(s=>({created_at:s.created_at,email:s.email,game_id:s.game_id,game_title:s.game_title,score:s.score,stars:s.stars,completed_count:s.completed_count}));}
+function toScoreRows(){return scores.map(s=>({created_at:s.created_at,email:s.email,game_id:s.game_id,game_title:s.game_title,score:s.score,completed_count:s.completed_count}));}
 function downloadExcel(){const table=$('surveyTable').outerHTML;download('ard-survey.xls','\ufeff<html><head><meta charset="utf-8"></head><body>'+table+'</body></html>','application/vnd.ms-excel;charset=utf-8');}
 bindPasswordToggle('adminPasswordToggle','password');
 bindPasswordToggle('memberPasswordToggle','memberPassword');
