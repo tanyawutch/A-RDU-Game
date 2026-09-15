@@ -69,14 +69,16 @@ set search_path = public
 as $$
 declare
   user_email text := lower(coalesce(new.email,''));
+  user_role text := coalesce(new.raw_user_meta_data->>'role', 'student');
 begin
   if user_email <> 'ardumfu@gmail.com'
-     and user_email not like '%@lamduan.mfu.ac.th' then
+     and user_email not like '%@lamduan.mfu.ac.th'
+     and not (user_role = 'admin' and user_email like '%@mfu.ac.th') then
     raise exception 'Only @lamduan.mfu.ac.th email addresses can register.';
   end if;
 
   insert into public.user_profiles(id,email,role)
-  values (new.id, user_email, case when user_email = 'ardumfu@gmail.com' then 'admin' else 'student' end)
+  values (new.id, user_email, case when user_email = 'ardumfu@gmail.com' or user_role = 'admin' then 'admin' else 'student' end)
   on conflict (id) do update set
     email = excluded.email,
     role = case when excluded.email = 'ardumfu@gmail.com' then 'admin' else public.user_profiles.role end;

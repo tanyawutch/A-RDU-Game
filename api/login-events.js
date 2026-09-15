@@ -39,7 +39,6 @@ async function currentUser(req) {
   });
   const user = await res.json();
   if (!res.ok) throw new Error(user?.message || 'ตรวจสอบผู้ใช้ไม่สำเร็จ');
-  if (!allowedEmail(user.email)) throw new Error('ใช้งานได้เฉพาะอีเมล @lamduan.mfu.ac.th เท่านั้น');
   return user;
 }
 
@@ -50,6 +49,9 @@ module.exports = async function handler(req, res) {
     const user = await currentUser(req);
     const rows = await supabase('/rest/v1/user_profiles?id=eq.' + encodeURIComponent(user.id) + '&select=id,email,role,login_count&limit=1');
     const existing = rows[0] || {};
+    if (!allowedEmail(user.email) && existing.role !== 'admin') {
+      throw new Error('ใช้งานได้เฉพาะอีเมล @lamduan.mfu.ac.th หรือบัญชีแอดมินที่ได้รับสิทธิ์แล้วเท่านั้น');
+    }
     const payload = {
       id: user.id,
       email: String(user.email || '').toLowerCase(),

@@ -15,17 +15,27 @@ function bindPasswordToggle(buttonId,inputId){
   const btn=$(buttonId), input=$(inputId); if(!btn||!input)return;
   btn.onclick=()=>{const visible=input.type==='text';input.type=visible?'password':'text';btn.textContent=visible?'👁':'ซ่อน';btn.setAttribute('aria-label',visible?'แสดงรหัสผ่าน':'ซ่อนรหัสผ่าน');};
 }
-function allowedMemberEmail(email){
+function allowedMemberEmail(email,role){
   const e=String(email||'').toLowerCase();
-  return e===adminEmail || e.endsWith('@lamduan.mfu.ac.th');
+  return e===adminEmail || e.endsWith('@lamduan.mfu.ac.th') || (role==='admin' && e.endsWith('@mfu.ac.th'));
 }
 async function login(){
   if(!client){msg('ยังไม่ได้ตั้งค่า Supabase ใน supabase-config.js');return;}
   const email=$('email').value.trim().toLowerCase(), password=$('password').value;
-  if(email!==adminEmail){msg('บัญชีนี้ไม่ใช่แอดมิน');return;}
   const {data,error}=await client.auth.signInWithPassword({email,password});
   if(error){msg(error.message);return;}
-  session=data.session; await showDashboard(data.session.user.email);
+  session=data.session;
+  if(!await hasAdminAccess()){
+    await client.auth.signOut();session=null;msg('บัญชีนี้ไม่มีสิทธิ์แอดมิน');return;
+  }
+  await showDashboard(data.session.user.email);
+}
+async function hasAdminAccess(){
+  const email=String(session?.user?.email||'').toLowerCase();
+  if(email===adminEmail)return true;
+  const {data,error}=await client.from('user_profiles').select('role').eq('id',session.user.id).maybeSingle();
+  if(error)return false;
+  return data?.role==='admin';
 }
 async function showDashboard(email){
   $('who').textContent=email;
@@ -119,7 +129,7 @@ function clearMemberForm(){
 async function saveMember(){
   const id=$('memberId').value, email=$('memberEmail').value.trim().toLowerCase(), password=$('memberPassword').value, role=$('memberRole').value;
   if(!email){memberMsg('กรุณากรอกอีเมล');return;}
-  if(!allowedMemberEmail(email)){memberMsg('อีเมลสมาชิกต้องเป็น @lamduan.mfu.ac.th เท่านั้น ยกเว้นอีเมลแอดมิน');return;}
+  if(!allowedMemberEmail(email,role)){memberMsg('อีเมลผู้เรียนต้องเป็น @lamduan.mfu.ac.th ส่วนบัญชี @mfu.ac.th ใช้ได้เฉพาะสิทธิ์แอดมิน');return;}
   if(!id && password.length<6){memberMsg('กรุณาตั้งรหัสผ่านอย่างน้อย 6 ตัวอักษร');return;}
   try{
     memberMsg('กำลังบันทึกสมาชิก...');
@@ -186,5 +196,5 @@ $('surveyCsv').onclick=()=>download('ard-survey.csv',toCsv(surveys.map(flatSurve
 $('surveyXls').onclick=downloadExcel;
 $('scoreCsv').onclick=()=>download('ard-game-scores.csv',toCsv(toScoreRows()),'text/csv;charset=utf-8');
 $('logoutBtn').onclick=async()=>{if(client)await client.auth.signOut();location.reload();};
-(async()=>{if(!client){msg('ยังไม่ได้ตั้งค่า Supabase ใน supabase-config.js');return;}const {data}=await client.auth.getSession();if(data.session?.user?.email?.toLowerCase()===adminEmail){session=data.session;showDashboard(data.session.user.email);}})();
+(async()=>{if(!client){msg('ยังไม่ได้ตั้งค่า Supabase ใน supabase-config.js');return;}const {data}=await client.auth.getSession();if(data.session){session=data.session;if(await hasAdminAccess())showDashboard(data.session.user.email);}})();
 })();
