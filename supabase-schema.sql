@@ -49,6 +49,8 @@ create table if not exists public.survey_submissions (
 create or replace function public.is_ard_admin()
 returns boolean
 language sql
+security definer
+set search_path = public
 stable
 as $$
   select exists (
