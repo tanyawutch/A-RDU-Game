@@ -7,8 +7,13 @@ create table if not exists public.user_profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   email text not null unique,
   role text not null default 'student' check (role in ('student','admin')),
+  login_count integer not null default 0,
+  last_login_at timestamptz,
   created_at timestamptz not null default now()
 );
+
+alter table public.user_profiles add column if not exists login_count integer not null default 0;
+alter table public.user_profiles add column if not exists last_login_at timestamptz;
 
 create table if not exists public.game_scores (
   id uuid primary key default gen_random_uuid(),

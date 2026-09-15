@@ -4,6 +4,7 @@ const ready=cfg.url&&cfg.anonKey&&!cfg.url.includes('YOUR_PROJECT_REF')&&!cfg.an
 const client=ready&&window.supabase?window.supabase.createClient(cfg.url,cfg.anonKey):null;
 const adminEmail=(cfg.adminEmail||'ardumfu@gmail.com').toLowerCase();
 let session=null,surveys=[],scores=[],members=[];
+let trackedSessionId='';
 const $=id=>document.getElementById(id);
 function esc(v){return String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 function msg(t){$('msg').textContent=t}
@@ -28,7 +29,13 @@ async function showDashboard(email){
   $('who').textContent=email;
   $('loginPanel').classList.add('hidden');
   $('dash').classList.remove('hidden');
+  await trackLogin();
   await Promise.all([loadData(),loadMembers()]);
+}
+async function trackLogin(){
+  if(!session?.access_token||trackedSessionId===session.access_token)return;
+  trackedSessionId=session.access_token;
+  try{await fetch('/api/login-events',{method:'POST',headers:{'Authorization':'Bearer '+session.access_token}});}catch(e){}
 }
 async function loadData(){
   const s1=await client.from('survey_submissions').select('*').order('created_at',{ascending:false});
@@ -71,7 +78,7 @@ function render(){
   renderSurveyTable(); renderScoreTable();
 }
 function renderMembers(){
-  $('memberBody').innerHTML=members.map(m=>'<tr><td>'+esc(m.email)+'</td><td>'+esc(roleLabel(m.role))+'</td><td>'+esc(m.email_confirmed_at?'ยืนยันแล้ว':'ยังไม่ยืนยัน')+'</td><td>'+esc(formatDate(m.last_sign_in_at))+'</td><td><div class="row-actions"><button class="btn lav" type="button" data-edit="'+esc(m.id)+'">แก้ไข</button><button class="btn danger" type="button" data-delete="'+esc(m.id)+'">ลบ</button></div></td></tr>').join('');
+  $('memberBody').innerHTML=members.map(m=>'<tr><td>'+esc(m.email)+'</td><td>'+esc(roleLabel(m.role))+'</td><td>'+esc(m.email_confirmed_at?'ยืนยันแล้ว':'ยังไม่ยืนยัน')+'</td><td>'+esc(m.login_count||0)+'</td><td>'+esc(formatDate(m.last_sign_in_at))+'</td><td><div class="row-actions"><button class="btn lav" type="button" data-edit="'+esc(m.id)+'">แก้ไข</button><button class="btn danger" type="button" data-delete="'+esc(m.id)+'">ลบ</button></div></td></tr>').join('');
   document.querySelectorAll('[data-edit]').forEach(btn=>btn.onclick=()=>editMember(btn.dataset.edit));
   document.querySelectorAll('[data-delete]').forEach(btn=>btn.onclick=()=>deleteMember(btn.dataset.delete));
 }

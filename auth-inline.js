@@ -6,6 +6,7 @@ const adminEmail = (cfg.adminEmail || 'ardumfu@gmail.com').toLowerCase();
 const allowedDomains = cfg.allowedDomains || ['lamduan.mfu.ac.th'];
 let session = null;
 let profile = null;
+let trackedSessionId = '';
 window.ARD_AUTH_ONLY_SURVEY = true;
 window.ARD_AUTH = { client, isReady: ready, getSession:()=>session, getProfile:()=>profile, isAdmin:()=>isAdmin(), canPlay:()=>!!session };
 const $=id=>document.getElementById(id);
@@ -30,12 +31,18 @@ async function loadProfile(){
   const {data} = await client.from('user_profiles').select('*').eq('id',session.user.id).maybeSingle();
   profile=data; return data;
 }
+async function trackLogin(){
+  if(!session?.access_token||trackedSessionId===session.access_token)return;
+  trackedSessionId=session.access_token;
+  try{await fetch('/api/login-events',{method:'POST',headers:{'Authorization':'Bearer '+session.access_token}});}catch(e){}
+}
 async function refresh(){
   if(!client){renderAuth('');show('auth');return;}
   const {data} = await client.auth.getSession(); session=data.session;
   if(!session){if(location.pathname==='/questionnaire'){showPublicSurvey();return;}renderAuth('');show('auth');return;}
   if(!isAllowedEmail(session.user.email)){await client.auth.signOut();session=null;profile=null;renderAuth('ใช้งานได้เฉพาะอีเมล @lamduan.mfu.ac.th เท่านั้น');show('auth');return;}
   await loadProfile();
+  await trackLogin();
   setText('userEmail', session.user.email || '');
   const adminLink=$('adminDashboardLink'); if(adminLink)adminLink.hidden=!isAdmin();
   if(location.pathname==='/questionnaire'){show('survey');if(window.renderSurvey)window.renderSurvey();return;}

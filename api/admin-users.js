@@ -59,7 +59,7 @@ async function verifyAdmin(req) {
 }
 
 async function profileMap() {
-  const profiles = await supabase('/rest/v1/user_profiles?select=id,email,role,created_at');
+  const profiles = await supabase('/rest/v1/user_profiles?select=id,email,role,created_at,login_count,last_login_at');
   return new Map(profiles.map(profile => [profile.id, profile]));
 }
 
@@ -85,8 +85,9 @@ async function listUsers(res) {
       id: user.id,
       email: user.email,
       role: profile?.role || user.user_metadata?.role || (String(user.email).toLowerCase() === ADMIN_EMAIL ? 'admin' : 'student'),
+      login_count: Number(profile?.login_count || 0),
       email_confirmed_at: user.email_confirmed_at,
-      last_sign_in_at: user.last_sign_in_at,
+      last_sign_in_at: profile?.last_login_at || user.last_sign_in_at,
       created_at: user.created_at
     };
   });
