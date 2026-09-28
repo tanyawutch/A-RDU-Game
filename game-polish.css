@@ -1,5 +1,7 @@
 /* Game and questionnaire polish restored after the static CSS rebuild. */
 .auth-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:14px;margin-bottom:12px}
+#auth .survey-shell{max-width:none}
+#authPanel.survey-panel{background:transparent;border:0;box-shadow:none;padding:0}
 .auth-card .google-login{width:100%;justify-content:center;background:#fff;color:var(--deep);border-color:#cfe0ef;margin-bottom:10px}
 .auth-card .google-login:hover{background:#f7fbff;border-color:#9bc8ee}
 .auth-card .primary,.auth-card .secondary{margin:0}

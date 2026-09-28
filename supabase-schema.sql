@@ -1,4 +1,4 @@
--- ARD Learning Game Supabase schema
+-- RDU antibiotics learning game Supabase schema
 -- Run this in Supabase SQL Editor after creating the project.
 
 create extension if not exists pgcrypto;
