@@ -7,15 +7,17 @@ const allowedDomains = cfg.allowedDomains || ['lamduan.mfu.ac.th'];
 let session = null;
 let profile = null;
 let trackedSessionId = '';
+let authReady = false;
+let refreshing = false;
 window.ARD_AUTH_ONLY_SURVEY = true;
-window.ARD_AUTH = { client, isReady: ready, getSession:()=>session, getProfile:()=>profile, isAdmin:()=>isAdmin(), canPlay:()=>!!session };
+window.ARD_AUTH = { client, isReady: ready, isLoaded:()=>authReady, getSession:()=>session, getProfile:()=>profile, isAdmin:()=>isAdmin(), canPlay:()=>!!session };
 const $=id=>document.getElementById(id);
 function emailDomain(email){return String(email||'').toLowerCase().split('@').pop()||'';}
 function isAllowedEmail(email){const e=String(email||'').toLowerCase();return e===adminEmail || allowedDomains.includes(emailDomain(e));}
 function isAdmin(){return String(session?.user?.email||'').toLowerCase()===adminEmail || profile?.role==='admin';}
 function isAllowedSession(){return isAllowedEmail(session?.user?.email) || isAdmin();}
 function setText(id,text){const el=$(id); if(el)el.textContent=text;}
-function show(view){['auth','home','play','survey'].forEach(id=>{const el=$(id); if(el)el.classList.toggle('active',id===view);});}
+function show(view){['boot','auth','home','play','survey'].forEach(id=>{const el=$(id); if(el)el.classList.toggle('active',id===view);});}
 function questionnaireUrl(){if(location.protocol!=='file:'&&location.pathname!=='/questionnaire')history.pushState(null,'','/questionnaire');}
 function showPublicSurvey(){questionnaireUrl();if(!session)setText('userEmail','');show('survey');if(window.renderSurvey)window.renderSurvey();}
 function bindPasswordToggle(buttonId,inputId){
@@ -38,16 +40,27 @@ async function trackLogin(){
   try{await fetch('/api/login-events',{method:'POST',headers:{'Authorization':'Bearer '+session.access_token}});}catch(e){}
 }
 async function refresh(){
-  if(!client){renderAuth('');show('auth');return;}
-  const {data} = await client.auth.getSession(); session=data.session;
-  if(!session){if(location.pathname==='/questionnaire'){showPublicSurvey();return;}renderAuth('');show('auth');return;}
-  await loadProfile();
-  if(!isAllowedSession()){await client.auth.signOut();session=null;profile=null;renderAuth('ใช้งานได้เฉพาะอีเมล @lamduan.mfu.ac.th หรือบัญชีแอดมินที่ได้รับสิทธิ์แล้วเท่านั้น');show('auth');return;}
-  await trackLogin();
-  setText('userEmail', session.user.email || '');
-  const adminLink=$('adminDashboardLink'); if(adminLink)adminLink.hidden=!isAdmin();
-  if(location.pathname==='/questionnaire'){show('survey');if(window.renderSurvey)window.renderSurvey();return;}
-  show('home');
+  if(refreshing)return;
+  refreshing = true;
+  try{
+    if(!client){authReady=true;renderAuth('');show('auth');return;}
+    const {data} = await client.auth.getSession(); session=data.session;
+    if(!session){
+      authReady=true;
+      if(location.pathname==='/questionnaire'){showPublicSurvey();return;}
+      renderAuth('');show('auth');return;
+    }
+    await loadProfile();
+    if(!isAllowedSession()){await client.auth.signOut();session=null;profile=null;authReady=true;renderAuth('ใช้งานได้เฉพาะอีเมล @lamduan.mfu.ac.th หรือบัญชีแอดมินที่ได้รับสิทธิ์แล้วเท่านั้น');show('auth');return;}
+    await trackLogin();
+    setText('userEmail', session.user.email || '');
+    const adminLink=$('adminDashboardLink'); if(adminLink)adminLink.hidden=!isAdmin();
+    authReady=true;
+    if(location.pathname==='/questionnaire'){show('survey');if(window.renderSurvey)window.renderSurvey();return;}
+    show('home');
+  } finally {
+    refreshing = false;
+  }
 }
 async function login(){
   const email=$('authEmail').value.trim().toLowerCase(), password=$('authPassword').value;
@@ -69,7 +82,7 @@ async function loginWithGoogle(){
   const {error}=await client.auth.signInWithOAuth({provider:'google',options:{redirectTo}});
   if(error)setText('authStatus',error.message);
 }
-async function logout(){ if(client) await client.auth.signOut(); session=null; profile=null; renderAuth('ออกจากระบบแล้ว'); show('auth'); }
+async function logout(){ if(client) await client.auth.signOut(); session=null; profile=null; authReady=true; renderAuth('ออกจากระบบแล้ว'); show('auth'); }
 window.saveSurveySubmission = async function(submission){
   if(!session){
     const res=await fetch('/api/survey-submissions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(submission)});
@@ -106,11 +119,12 @@ window.saveGameScore = async function(payload){
     payload
   });
 };
-window.showHome = function(){ if(session){['auth','survey','play'].forEach(id=>$(id)?.classList.remove('active'));$('home')?.classList.add('active');} else {window.showLoginForGames();} };
+window.showAuthLoading = function(){ if(!authReady){show('boot');refresh();return;} if(session){show('home');} else {window.showLoginForGames();} };
+window.showHome = function(){ if(!authReady){window.showAuthLoading();return;} if(session){show('home');} else {window.showLoginForGames();} };
 window.showSurvey = function(){ showPublicSurvey(); };
-window.showLoginForGames = function(){renderAuth('กรุณาเข้าสู่ระบบด้วยอีเมลมหาวิทยาลัยก่อนเข้าเล่นเกม');show('auth');};
+window.showLoginForGames = function(){if(!authReady){window.showAuthLoading();return;}renderAuth('กรุณาเข้าสู่ระบบด้วยอีเมลมหาวิทยาลัยก่อนเข้าเล่นเกม');show('auth');};
 window.addEventListener('DOMContentLoaded',()=>{
-  renderAuth('');
+  show('boot');
   $('surveyBtn')?.addEventListener('click',window.showSurvey);
   $('logoutBtn')?.addEventListener('click',logout);
   refresh();
