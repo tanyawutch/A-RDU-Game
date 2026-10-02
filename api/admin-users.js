@@ -97,7 +97,11 @@ module.exports = async function handler(req, res) {
     if (!SERVICE_KEY) return send(res, 500, { error: 'ยังไม่ได้ตั้งค่า SUPABASE_SERVICE_ROLE_KEY ใน Vercel' });
     await verifyAdmin(req);
 
-    if (req.method === 'GET') return listUsers(res);
+    if (req.method === 'GET') {
+      const url = new URL(req.url || '/', 'https://a-rdu-game.vercel.app');
+      if (url.searchParams.get('check') === '1') return send(res, 200, { ok: true });
+      return listUsers(res);
+    }
 
     const body = await jsonBody(req);
     if (req.method === 'POST') {

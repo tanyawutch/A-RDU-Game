@@ -39,6 +39,18 @@ async function trackLogin(){
   trackedSessionId=session.access_token;
   try{await fetch('/api/login-events',{method:'POST',headers:{'Authorization':'Bearer '+session.access_token}});}catch(e){}
 }
+async function updateAdminLink(){
+  const adminLink=$('adminDashboardLink');
+  if(!adminLink)return;
+  adminLink.hidden=true;
+  if(!session?.access_token)return;
+  try{
+    const res=await fetch('/api/admin-users?check=1',{headers:{'Authorization':'Bearer '+session.access_token}});
+    adminLink.hidden=!res.ok;
+  }catch(e){
+    adminLink.hidden=true;
+  }
+}
 async function refresh(){
   if(refreshing)return;
   refreshing = true;
@@ -54,7 +66,7 @@ async function refresh(){
     if(!isAllowedSession()){await client.auth.signOut();session=null;profile=null;authReady=true;renderAuth('ใช้งานได้เฉพาะอีเมล @lamduan.mfu.ac.th หรือบัญชีแอดมินที่ได้รับสิทธิ์แล้วเท่านั้น');show('auth');return;}
     await trackLogin();
     setText('userEmail', session.user.email || '');
-    const adminLink=$('adminDashboardLink'); if(adminLink)adminLink.hidden=true;
+    await updateAdminLink();
     authReady=true;
     if(location.pathname==='/questionnaire'){show('survey');if(window.renderSurvey)window.renderSurvey();return;}
     show('home');
@@ -82,7 +94,7 @@ async function loginWithGoogle(){
   const {error}=await client.auth.signInWithOAuth({provider:'google',options:{redirectTo}});
   if(error)setText('authStatus',error.message);
 }
-async function logout(){ if(client) await client.auth.signOut(); session=null; profile=null; authReady=true; renderAuth('ออกจากระบบแล้ว'); show('auth'); }
+async function logout(){ if(client) await client.auth.signOut(); session=null; profile=null; authReady=true; await updateAdminLink(); renderAuth('ออกจากระบบแล้ว'); show('auth'); }
 window.saveSurveySubmission = async function(submission){
   if(!session){
     const res=await fetch('/api/survey-submissions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(submission)});
