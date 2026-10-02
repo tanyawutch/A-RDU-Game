@@ -2,7 +2,7 @@
 const cfg = window.ARD_SUPABASE_CONFIG || {};
 const ready = cfg.url && cfg.anonKey && !cfg.url.includes('YOUR_PROJECT_REF') && !cfg.anonKey.includes('YOUR_SUPABASE_ANON_KEY');
 const client = ready && window.supabase ? window.supabase.createClient(cfg.url, cfg.anonKey) : null;
-const adminEmail = (cfg.adminEmail || 'ardumfu@gmail.com').toLowerCase();
+const adminEmail = String(cfg.adminEmail || '').toLowerCase();
 const allowedDomains = cfg.allowedDomains || ['lamduan.mfu.ac.th'];
 let session = null;
 let profile = null;
@@ -13,8 +13,8 @@ window.ARD_AUTH_ONLY_SURVEY = true;
 window.ARD_AUTH = { client, isReady: ready, isLoaded:()=>authReady, getSession:()=>session, getProfile:()=>profile, isAdmin:()=>isAdmin(), canPlay:()=>!!session };
 const $=id=>document.getElementById(id);
 function emailDomain(email){return String(email||'').toLowerCase().split('@').pop()||'';}
-function isAllowedEmail(email){const e=String(email||'').toLowerCase();return e===adminEmail || allowedDomains.includes(emailDomain(e));}
-function isAdmin(){return String(session?.user?.email||'').toLowerCase()===adminEmail || profile?.role==='admin';}
+function isAllowedEmail(email){const e=String(email||'').toLowerCase();return (!!adminEmail&&e===adminEmail) || allowedDomains.includes(emailDomain(e));}
+function isAdmin(){const email=String(session?.user?.email||'').toLowerCase();return (!!adminEmail&&email===adminEmail) || profile?.role==='admin';}
 function isAllowedSession(){return isAllowedEmail(session?.user?.email) || isAdmin();}
 function setText(id,text){const el=$(id); if(el)el.textContent=text;}
 function show(view){['boot','auth','home','play','survey'].forEach(id=>{const el=$(id); if(el)el.classList.toggle('active',id===view);});}
@@ -54,7 +54,7 @@ async function refresh(){
     if(!isAllowedSession()){await client.auth.signOut();session=null;profile=null;authReady=true;renderAuth('ใช้งานได้เฉพาะอีเมล @lamduan.mfu.ac.th หรือบัญชีแอดมินที่ได้รับสิทธิ์แล้วเท่านั้น');show('auth');return;}
     await trackLogin();
     setText('userEmail', session.user.email || '');
-    const adminLink=$('adminDashboardLink'); if(adminLink)adminLink.hidden=!isAdmin();
+    const adminLink=$('adminDashboardLink'); if(adminLink)adminLink.hidden=true;
     authReady=true;
     if(location.pathname==='/questionnaire'){show('survey');if(window.renderSurvey)window.renderSurvey();return;}
     show('home');

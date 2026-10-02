@@ -57,7 +57,7 @@ as $$
     select 1 from public.user_profiles p
     where p.id = auth.uid()
       and p.role = 'admin'
-      and lower(p.email) = 'ardumfu@gmail.com'
+      and lower(p.email) = '<ADMIN_EMAIL>'
   );
 $$;
 
@@ -71,17 +71,17 @@ declare
   user_email text := lower(coalesce(new.email,''));
   user_role text := coalesce(new.raw_user_meta_data->>'role', 'student');
 begin
-  if user_email <> 'ardumfu@gmail.com'
+  if user_email <> '<ADMIN_EMAIL>'
      and user_email not like '%@lamduan.mfu.ac.th'
      and not (user_role = 'admin' and user_email like '%@mfu.ac.th') then
     raise exception 'Only @lamduan.mfu.ac.th email addresses can register.';
   end if;
 
   insert into public.user_profiles(id,email,role)
-  values (new.id, user_email, case when user_email = 'ardumfu@gmail.com' or user_role = 'admin' then 'admin' else 'student' end)
+  values (new.id, user_email, case when user_email = '<ADMIN_EMAIL>' or user_role = 'admin' then 'admin' else 'student' end)
   on conflict (id) do update set
     email = excluded.email,
-    role = case when excluded.email = 'ardumfu@gmail.com' then 'admin' else public.user_profiles.role end;
+    role = case when excluded.email = '<ADMIN_EMAIL>' then 'admin' else public.user_profiles.role end;
   return new;
 end;
 $$;
@@ -121,3 +121,4 @@ create index if not exists idx_survey_submissions_user_created on public.survey_
 alter table public.survey_submissions add column if not exists quiz_score integer;
 alter table public.survey_submissions add column if not exists quiz_total integer;
 alter table public.survey_submissions add column if not exists quiz_percent numeric;
+

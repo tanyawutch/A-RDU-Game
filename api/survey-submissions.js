@@ -1,6 +1,6 @@
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://wsruzvfatifqifpyosvx.supabase.co';
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const ADMIN_EMAIL = 'ardumfu@gmail.com';
+const ADMIN_EMAIL = String(process.env.ADMIN_EMAIL || '').toLowerCase();
 
 function send(res, status, body) {
   res.statusCode = status;
@@ -37,6 +37,7 @@ async function supabase(path, options = {}) {
 }
 
 async function fallbackUserId() {
+  if (!ADMIN_EMAIL) throw new Error('ยังไม่ได้ตั้งค่า ADMIN_EMAIL ใน Vercel');
   const rows = await supabase('/rest/v1/user_profiles?email=eq.' + encodeURIComponent(ADMIN_EMAIL) + '&select=id&limit=1');
   if (!rows.length) throw new Error('ไม่พบบัญชีแอดมินสำหรับผูกข้อมูลแบบสอบถาม');
   return rows[0].id;

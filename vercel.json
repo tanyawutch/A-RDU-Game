@@ -3,6 +3,7 @@
   "trailingSlash": false,
   "routes": [
     { "src": "^/questionnaire/?$", "dest": "/index.html" },
+    { "src": "^/admin/?$", "dest": "/admin-dashboard.html" },
     { "src": "^/admin-dashboard/?$", "dest": "/admin-dashboard.html" },
     { "src": "^/videos/?$", "dest": "/videos.html" },
     { "handle": "filesystem" }

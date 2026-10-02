@@ -1,6 +1,6 @@
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://wsruzvfatifqifpyosvx.supabase.co';
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const ADMIN_EMAIL = 'ardumfu@gmail.com';
+const ADMIN_EMAIL = String(process.env.ADMIN_EMAIL || '').toLowerCase();
 const ALLOWED_DOMAINS = ['lamduan.mfu.ac.th'];
 
 function send(res, status, body) {
@@ -52,9 +52,7 @@ async function verifyAdmin(req) {
   const user = await userRes.json();
   if (!userRes.ok) throw new Error(user?.message || 'ตรวจสอบสิทธิ์ไม่สำเร็จ');
   const email = String(user.email || '').toLowerCase();
-  if (email === ADMIN_EMAIL) return user;
-  const profiles = await supabase('/rest/v1/user_profiles?id=eq.' + encodeURIComponent(user.id) + '&role=eq.admin&select=id,email,role');
-  if (!profiles.length) throw new Error('บัญชีนี้ไม่มีสิทธิ์แอดมิน');
+  if (email !== ADMIN_EMAIL) throw new Error('บัญชีนี้ไม่มีสิทธิ์แอดมิน');
   return user;
 }
 
@@ -144,6 +142,8 @@ module.exports = async function handler(req, res) {
 
     send(res, 405, { error: 'Method not allowed' });
   } catch (err) {
-    send(res, 500, { error: err.message || String(err) });
+    const message = err.message || String(err);
+    const status = /เข้าสู่ระบบ|สิทธิ์|ตรวจสอบ/.test(message) ? 403 : 500;
+    send(res, status, { error: message });
   }
 };

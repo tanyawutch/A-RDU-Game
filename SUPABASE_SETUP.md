@@ -14,7 +14,6 @@
 window.ARD_SUPABASE_CONFIG = {
   url: 'https://PROJECT_REF.supabase.co',
   anonKey: 'ANON_PUBLIC_KEY',
-  adminEmail: 'ardumfu@gmail.com',
   allowedDomains: ['lamduan.mfu.ac.th'],
   productionDomain: 'a-rdu-game.vercel.app'
 };
@@ -24,10 +23,7 @@ window.ARD_SUPABASE_CONFIG = {
 
 ## 2. สร้าง Admin User
 
-ไปที่ Authentication > Users แล้วสร้างผู้ใช้:
-
-- Email: `ardumfu@gmail.com`
-- Password: `arduMfu1234`
+ไปที่ Authentication > Users แล้วสร้างผู้ใช้แอดมินด้วยอีเมลที่เจ้าของระบบกำหนดไว้ในตัวแปรแวดล้อม `ADMIN_EMAIL`
 
 หลังสร้างแล้ว ให้ตรวจที่ตาราง `user_profiles` ว่า role เป็น `admin`
 
@@ -37,7 +33,7 @@ window.ARD_SUPABASE_CONFIG = {
 insert into public.user_profiles(id,email,role)
 select id, lower(email), 'admin'
 from auth.users
-where lower(email) = 'ardumfu@gmail.com'
+where lower(email) = '<ADMIN_EMAIL>'
 on conflict (id) do update set role = 'admin';
 ```
 
@@ -48,7 +44,7 @@ on conflict (id) do update set role = 'admin';
 - ฝั่งหน้าเว็บตรวจเฉพาะ `@lamduan.mfu.ac.th`
 - ฝั่งฐานข้อมูล trigger ใน `supabase-schema.sql` ปฏิเสธอีเมลนอกโดเมนนี้
 
-Admin `ardumfu@gmail.com` ได้รับอนุญาตเป็นกรณีพิเศษ
+บัญชีแอดมินที่กำหนดใน `ADMIN_EMAIL` ได้รับอนุญาตเป็นกรณีพิเศษ
 
 ## 4. ตั้งค่า Auth URL และ Google OAuth
 

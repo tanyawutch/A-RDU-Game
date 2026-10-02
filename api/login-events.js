@@ -1,6 +1,6 @@
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://wsruzvfatifqifpyosvx.supabase.co';
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const ADMIN_EMAIL = 'ardumfu@gmail.com';
+const ADMIN_EMAIL = String(process.env.ADMIN_EMAIL || '').toLowerCase();
 const ALLOWED_DOMAINS = ['lamduan.mfu.ac.th'];
 
 function send(res, status, body) {
@@ -12,7 +12,7 @@ function send(res, status, body) {
 function allowedEmail(email) {
   const normalized = String(email || '').toLowerCase();
   const domain = normalized.split('@').pop();
-  return normalized === ADMIN_EMAIL || ALLOWED_DOMAINS.includes(domain);
+  return (!!ADMIN_EMAIL && normalized === ADMIN_EMAIL) || ALLOWED_DOMAINS.includes(domain);
 }
 
 async function supabase(path, options = {}) {
@@ -55,7 +55,7 @@ module.exports = async function handler(req, res) {
     const payload = {
       id: user.id,
       email: String(user.email || '').toLowerCase(),
-      role: existing.role || (String(user.email || '').toLowerCase() === ADMIN_EMAIL ? 'admin' : 'student'),
+      role: existing.role || ((!!ADMIN_EMAIL && String(user.email || '').toLowerCase() === ADMIN_EMAIL) ? 'admin' : 'student'),
       login_count: Number(existing.login_count || 0) + 1,
       last_login_at: new Date().toISOString()
     };

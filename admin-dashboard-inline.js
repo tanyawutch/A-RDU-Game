@@ -2,7 +2,6 @@
 const cfg=window.ARD_SUPABASE_CONFIG||{};
 const ready=cfg.url&&cfg.anonKey&&!cfg.url.includes('YOUR_PROJECT_REF')&&!cfg.anonKey.includes('YOUR_SUPABASE_ANON_KEY');
 const client=ready&&window.supabase?window.supabase.createClient(cfg.url,cfg.anonKey):null;
-const adminEmail=(cfg.adminEmail||'ardumfu@gmail.com').toLowerCase();
 let session=null,surveys=[],scores=[],members=[];
 let trackedSessionId='';
 const pageSize=10;
@@ -11,50 +10,22 @@ const $=id=>document.getElementById(id);
 function esc(v){return String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 function msg(t){$('msg').textContent=t}
 function memberMsg(t){$('memberMsg').textContent=t}
+function show(el){['loginPanel','noAccessPanel','dash'].forEach(id=>$(id)?.classList.toggle('hidden',id!==el));}
 function bindPasswordToggle(buttonId,inputId){
   const btn=$(buttonId), input=$(inputId); if(!btn||!input)return;
   btn.onclick=()=>{const visible=input.type==='text';input.type=visible?'password':'text';btn.textContent=visible?'👁':'ซ่อน';btn.setAttribute('aria-label',visible?'แสดงรหัสผ่าน':'ซ่อนรหัสผ่าน');};
 }
-function allowedMemberEmail(email,role){
-  const e=String(email||'').toLowerCase();
-  return e===adminEmail || e.endsWith('@lamduan.mfu.ac.th') || (role==='admin' && e.endsWith('@mfu.ac.th'));
-}
-async function login(){
+async function loginWithGoogle(){
   if(!client){msg('ยังไม่ได้ตั้งค่า Supabase ใน supabase-config.js');return;}
-  const email=$('email').value.trim().toLowerCase(), password=$('password').value;
-  const {data,error}=await client.auth.signInWithPassword({email,password});
-  if(error){msg(error.message);return;}
-  session=data.session;
-  if(!await hasAdminAccess()){
-    await client.auth.signOut();session=null;msg('บัญชีนี้ไม่มีสิทธิ์แอดมิน');return;
-  }
-  await showDashboard(data.session.user.email);
+  const redirectTo=location.protocol==='file:'?'http://127.0.0.1:8088/admin-dashboard':location.origin+'/admin-dashboard';
+  const {error}=await client.auth.signInWithOAuth({provider:'google',options:{redirectTo}});
+  if(error)msg(error.message);
 }
-async function hasAdminAccess(){
-  const email=String(session?.user?.email||'').toLowerCase();
-  if(email===adminEmail)return true;
-  const {data,error}=await client.from('user_profiles').select('role').eq('id',session.user.id).maybeSingle();
-  if(error)return false;
-  return data?.role==='admin';
-}
-async function showDashboard(email){
-  $('who').textContent=email;
-  $('loginPanel').classList.add('hidden');
-  $('dash').classList.remove('hidden');
-  await trackLogin();
-  await Promise.all([loadData(),loadMembers()]);
-}
-async function trackLogin(){
-  if(!session?.access_token||trackedSessionId===session.access_token)return;
-  trackedSessionId=session.access_token;
-  try{await fetch('/api/login-events',{method:'POST',headers:{'Authorization':'Bearer '+session.access_token}});}catch(e){}
-}
-async function loadData(){
-  const s1=await client.from('survey_submissions').select('*').order('created_at',{ascending:false});
-  const s2=await client.from('game_scores').select('*').order('created_at',{ascending:false});
-  if(s1.error){alert(s1.error.message);return;}
-  if(s2.error){alert(s2.error.message);return;}
-  surveys=s1.data||[]; scores=s2.data||[]; render();
+async function logout(){
+  if(client)await client.auth.signOut();
+  session=null;
+  $('who').textContent='ยังไม่ได้เข้าสู่ระบบ';
+  show('loginPanel');
 }
 async function adminApi(method,body){
   if(!session?.access_token)throw new Error('กรุณาเข้าสู่ระบบแอดมินอีกครั้ง');
@@ -69,6 +40,36 @@ async function adminSurveyApi(method,body){
   const data=await res.json().catch(()=>({}));
   if(!res.ok)throw new Error(data.error||'เรียก API ไม่สำเร็จ');
   return data;
+}
+async function assertAdmin(){
+  const data=await adminApi('GET');
+  members=data.users||[];
+}
+async function showNoAccess(){
+  $('who').textContent=session?.user?.email||'ไม่มีสิทธิ์เข้าใช้งาน';
+  show('noAccessPanel');
+}
+async function showDashboard(email){
+  $('who').textContent=email;
+  show('dash');
+  await trackLogin();
+  renderMembers();
+  await loadData();
+}
+async function trackLogin(){
+  if(!session?.access_token||trackedSessionId===session.access_token)return;
+  trackedSessionId=session.access_token;
+  try{await fetch('/api/login-events',{method:'POST',headers:{'Authorization':'Bearer '+session.access_token}});}catch(e){}
+}
+async function loadData(){
+  try{
+    const data=await adminSurveyApi('GET');
+    surveys=data.surveys||[];
+    scores=data.scores||[];
+    render();
+  }catch(e){
+    alert(e.message||String(e));
+  }
 }
 async function loadMembers(){
   try{
@@ -129,7 +130,6 @@ function clearMemberForm(){
 async function saveMember(){
   const id=$('memberId').value, email=$('memberEmail').value.trim().toLowerCase(), password=$('memberPassword').value, role=$('memberRole').value;
   if(!email){memberMsg('กรุณากรอกอีเมล');return;}
-  if(!allowedMemberEmail(email,role)){memberMsg('อีเมลผู้เรียนต้องเป็น @lamduan.mfu.ac.th ส่วนบัญชี @mfu.ac.th ใช้ได้เฉพาะสิทธิ์แอดมิน');return;}
   if(!id && password.length<6){memberMsg('กรุณาตั้งรหัสผ่านอย่างน้อย 6 ตัวอักษร');return;}
   try{
     memberMsg('กำลังบันทึกสมาชิก...');
@@ -185,9 +185,8 @@ function toCsv(rows){const headers=Array.from(new Set(rows.flatMap(r=>Object.key
 function download(name,content,type){const blob=new Blob([content],{type});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 function toScoreRows(){return scores.map(s=>({created_at:s.created_at,email:s.email,game_id:s.game_id,game_title:s.game_title,score:s.score,completed_count:s.completed_count}));}
 function downloadExcel(){const table=$('surveyTable').outerHTML;download('ard-survey.xls','\ufeff<html><head><meta charset="utf-8"></head><body>'+table+'</body></html>','application/vnd.ms-excel;charset=utf-8');}
-bindPasswordToggle('adminPasswordToggle','password');
 bindPasswordToggle('memberPasswordToggle','memberPassword');
-$('loginBtn').onclick=login;
+$('googleLoginBtn').onclick=loginWithGoogle;
 $('refreshBtn').onclick=loadData;
 $('memberRefresh').onclick=loadMembers;
 $('memberSave').onclick=saveMember;
@@ -195,6 +194,18 @@ $('memberClear').onclick=clearMemberForm;
 $('surveyCsv').onclick=()=>download('ard-survey.csv',toCsv(surveys.map(flatSurvey)),'text/csv;charset=utf-8');
 $('surveyXls').onclick=downloadExcel;
 $('scoreCsv').onclick=()=>download('ard-game-scores.csv',toCsv(toScoreRows()),'text/csv;charset=utf-8');
-$('logoutBtn').onclick=async()=>{if(client)await client.auth.signOut();location.reload();};
-(async()=>{if(!client){msg('ยังไม่ได้ตั้งค่า Supabase ใน supabase-config.js');return;}const {data}=await client.auth.getSession();if(data.session){session=data.session;if(await hasAdminAccess())showDashboard(data.session.user.email);}})();
+$('logoutBtn').onclick=logout;
+$('noAccessLogout').onclick=logout;
+(async()=>{
+  if(!client){msg('ยังไม่ได้ตั้งค่า Supabase ใน supabase-config.js');return;}
+  const {data}=await client.auth.getSession();
+  if(!data.session){show('loginPanel');return;}
+  session=data.session;
+  try{
+    await assertAdmin();
+    await showDashboard(data.session.user.email);
+  }catch(e){
+    await showNoAccess();
+  }
+})();
 })();
