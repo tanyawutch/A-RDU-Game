@@ -1,6 +1,5 @@
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://wsruzvfatifqifpyosvx.supabase.co';
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const ADMIN_EMAIL = String(process.env.ADMIN_EMAIL || '').toLowerCase();
 
 function send(res, status, body) {
   res.statusCode = status;
@@ -36,11 +35,16 @@ async function supabase(path, options = {}) {
   return data;
 }
 
-async function fallbackUserId() {
-  if (!ADMIN_EMAIL) throw new Error('ยังไม่ได้ตั้งค่า ADMIN_EMAIL ใน Vercel');
-  const rows = await supabase('/rest/v1/user_profiles?email=eq.' + encodeURIComponent(ADMIN_EMAIL) + '&select=id&limit=1');
-  if (!rows.length) throw new Error('ไม่พบบัญชีแอดมินสำหรับผูกข้อมูลแบบสอบถาม');
-  return rows[0].id;
+async function verifyUser(req) {
+  const auth = req.headers.authorization || '';
+  if (!auth.startsWith('Bearer ')) throw new Error('กรุณาเข้าสู่ระบบก่อนส่งแบบสอบถาม');
+  const userRes = await fetch(SUPABASE_URL + '/auth/v1/user', {
+    headers: { apikey: SERVICE_KEY, Authorization: auth }
+  });
+  const user = await userRes.json();
+  if (!userRes.ok) throw new Error(user?.message || 'ตรวจสอบผู้ใช้ไม่สำเร็จ');
+  if (!user.id || !user.email) throw new Error('ไม่พบอีเมลผู้ใช้ กรุณาเข้าสู่ระบบใหม่');
+  return user;
 }
 
 module.exports = async function handler(req, res) {
@@ -48,10 +52,10 @@ module.exports = async function handler(req, res) {
     if (req.method !== 'POST') return send(res, 405, { error: 'Method not allowed' });
     if (!SERVICE_KEY) return send(res, 500, { error: 'ยังไม่ได้ตั้งค่า SUPABASE_SERVICE_ROLE_KEY ใน Vercel' });
     const submission = await readBody(req);
-    const userId = await fallbackUserId();
+    const user = await verifyUser(req);
     const payload = {
-      user_id: userId,
-      email: submission.email || 'guest-questionnaire',
+      user_id: user.id,
+      email: user.email,
       profile: submission.profile || {},
       confidence: submission.confidence || {},
       knowledge: submission.knowledge || {},

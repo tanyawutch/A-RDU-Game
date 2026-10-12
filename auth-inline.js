@@ -19,7 +19,7 @@ function isAllowedSession(){return isAllowedEmail(session?.user?.email) || isAdm
 function setText(id,text){const el=$(id); if(el)el.textContent=text;}
 function show(view){['boot','auth','home','play','survey'].forEach(id=>{const el=$(id); if(el)el.classList.toggle('active',id===view);});}
 function questionnaireUrl(){if(location.protocol!=='file:'&&location.pathname!=='/questionnaire')history.pushState(null,'','/questionnaire');}
-function showPublicSurvey(){questionnaireUrl();if(!session)setText('userEmail','');show('survey');if(window.renderSurvey)window.renderSurvey();}
+function showProtectedSurvey(){questionnaireUrl();if(!session){showLoginForSurvey();return;}setText('userEmail',session.user.email||'');show('survey');if(window.renderSurvey)window.renderSurvey();}
 function renderAuth(message){
   const host=$('authPanel'); if(!host)return;
   host.innerHTML='<div class="auth-card"><img src="assets/logo-nursing.png" alt="โลโก้"><div><p class="eyebrow">RDU antibiotics learning game</p><h1>เข้าสู่ระบบเพื่อเข้าเล่นเกม</h1><p>เข้าใช้งานด้วยบัญชี Gmail ของมหาวิทยาลัย @lamduan.mfu.ac.th เท่านั้น</p></div><button class="primary google-login" id="googleLoginBtn" type="button">เข้าสู่ระบบด้วย Gmail</button><p class="auth-status" id="authStatus">'+(message||'')+'</p>'+(ready?'':'<div class="survey-warning">ยังไม่ได้ตั้งค่า Supabase URL/Anon key ในไฟล์ supabase-config.js</div>')+'</div>';
@@ -55,7 +55,7 @@ async function refresh(){
     const {data} = await client.auth.getSession(); session=data.session;
     if(!session){
       authReady=true;
-      if(location.pathname==='/questionnaire'){showPublicSurvey();return;}
+      if(location.pathname==='/questionnaire'){renderAuth('กรุณาเข้าสู่ระบบด้วย Gmail ก่อนทำแบบสอบถาม');show('auth');return;}
       renderAuth('');show('auth');return;
     }
     await loadProfile();
@@ -72,17 +72,15 @@ async function refresh(){
 }
 async function loginWithGoogle(){
   if(!client){setText('authStatus','ยังไม่ได้ตั้งค่า Supabase');return;}
-  const redirectTo=location.protocol==='file:'?'http://127.0.0.1:8088/':location.origin + '/';
+  const target=location.pathname==='/questionnaire'?'/questionnaire':'/';
+  const redirectTo=location.protocol==='file:'?'http://127.0.0.1:8088'+target:location.origin + target;
   const {error}=await client.auth.signInWithOAuth({provider:'google',options:{redirectTo}});
   if(error)setText('authStatus',error.message);
 }
 async function logout(){ if(client) await client.auth.signOut(); session=null; profile=null; authReady=true; await updateAdminLink(); renderAuth('ออกจากระบบแล้ว'); show('auth'); }
 window.saveSurveySubmission = async function(submission){
   if(!session){
-    const res=await fetch('/api/survey-submissions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(submission)});
-    const data=await res.json().catch(()=>({}));
-    if(!res.ok)throw new Error(data.error||'บันทึกแบบสอบถามไม่สำเร็จ');
-    return;
+    throw new Error('กรุณาเข้าสู่ระบบด้วย Gmail ก่อนส่งแบบสอบถาม');
   }
   if(!client) throw new Error('ยังไม่ได้ตั้งค่า Supabase');
   const {error}=await client.from('survey_submissions').insert({
@@ -115,8 +113,9 @@ window.saveGameScore = async function(payload){
 };
 window.showAuthLoading = function(){ if(!authReady){show('boot');refresh();return;} if(session){show('home');} else {window.showLoginForGames();} };
 window.showHome = function(){ if(!authReady){window.showAuthLoading();return;} if(session){show('home');} else {window.showLoginForGames();} };
-window.showSurvey = function(){ showPublicSurvey(); };
+window.showSurvey = function(){ showProtectedSurvey(); };
 window.showLoginForGames = function(){if(!authReady){window.showAuthLoading();return;}renderAuth('กรุณาเข้าสู่ระบบด้วยอีเมลมหาวิทยาลัยก่อนเข้าเล่นเกม');show('auth');};
+function showLoginForSurvey(){if(!authReady){window.showAuthLoading();return;}renderAuth('กรุณาเข้าสู่ระบบด้วย Gmail ก่อนทำแบบสอบถาม');show('auth');}
 window.addEventListener('DOMContentLoaded',()=>{
   show('boot');
   $('surveyBtn')?.addEventListener('click',window.showSurvey);
