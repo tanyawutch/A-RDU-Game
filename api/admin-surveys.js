@@ -48,6 +48,30 @@ async function verifyAdmin(req) {
   if (email !== ADMIN_EMAIL) throw new Error('บัญชีนี้ไม่มีสิทธิ์แอดมิน');
   return user;
 }
+function replaceTerm(value) {
+  if (typeof value === 'string') return value.replace(/Lacosamide/g, 'Lincosamide');
+  if (Array.isArray(value)) return value.map(replaceTerm);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, replaceTerm(item)]));
+  }
+  return value;
+}
+async function normalizeSurveyTerms(surveys) {
+  await Promise.all((surveys || []).map(async survey => {
+    const next = {
+      knowledge: replaceTerm(survey.knowledge || {}),
+      payload: replaceTerm(survey.payload || {})
+    };
+    if (JSON.stringify(next.knowledge) === JSON.stringify(survey.knowledge || {}) &&
+        JSON.stringify(next.payload) === JSON.stringify(survey.payload || {})) return;
+    await supabase('/rest/v1/survey_submissions?id=eq.' + encodeURIComponent(survey.id), {
+      method: 'PATCH',
+      body: JSON.stringify(next)
+    });
+    survey.knowledge = next.knowledge;
+    survey.payload = next.payload;
+  }));
+}
 
 module.exports = async function handler(req, res) {
   try {
@@ -55,6 +79,7 @@ module.exports = async function handler(req, res) {
     await verifyAdmin(req);
     if (req.method === 'GET') {
       const surveys = await supabase('/rest/v1/survey_submissions?select=*&order=created_at.desc');
+      await normalizeSurveyTerms(surveys);
       const scores = await supabase('/rest/v1/game_scores?select=*&order=created_at.desc');
       return send(res, 200, { surveys, scores });
     }

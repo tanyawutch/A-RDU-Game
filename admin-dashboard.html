@@ -19,7 +19,7 @@ main{width:min(1240px,calc(100% - 28px));margin:0 auto;padding:24px 0 32px}.pane
 @media(max-width:860px){.topbar{align-items:flex-start;flex-direction:column}.stats,.grid-form{grid-template-columns:1fr}.toolbar .btn{flex:1}}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-config.js?v=20261002-admin-button"></script>
+  <script src="supabase-config.js?v=20261012-export-fix"></script>
 </head>
 <body>
   <header class="topbar">
@@ -52,10 +52,10 @@ main{width:min(1240px,calc(100% - 28px));margin:0 auto;padding:24px 0 32px}.pane
     </section>
     <section class="hidden" id="dash">
       <div class="stats">
-        <div class="stat"><span>ผู้ส่งแบบสอบถาม</span><strong id="surveyCount">0</strong></div>
+        <div class="stat"><span>แบบสอบถามทั้งหมด</span><strong id="surveyCount">0</strong></div>
+        <div class="stat"><span>ผู้ตอบไม่ซ้ำ</span><strong id="totalRows">0</strong></div>
         <div class="stat"><span>คะแนนเกม</span><strong id="scoreCount">0</strong></div>
         <div class="stat"><span>คะแนนรวมเฉลี่ย</span><strong id="avgScore">0</strong></div>
-        <div class="stat"><span>รายการทั้งหมด</span><strong id="totalRows">0</strong></div>
       </div>
       <div class="panel">
         <h2>จัดการสมาชิก</h2>
@@ -95,7 +95,8 @@ main{width:min(1240px,calc(100% - 28px));margin:0 auto;padding:24px 0 32px}.pane
       </div>
     </section>
   </main>
-  <script src="admin-dashboard-inline.js?v=20261002-admin-button" charset="utf-8"></script>
+  <script src="admin-dashboard-inline.js?v=20261012-export-fix" charset="utf-8"></script>
 </body>
 </html>
+
 

@@ -85,7 +85,7 @@ async function loadMembers(){
 function render(){
   $('surveyCount').textContent=surveys.length;
   $('scoreCount').textContent=scores.length;
-  $('totalRows').textContent=surveys.length+scores.length;
+  $('totalRows').textContent=new Set(surveys.map(s=>String(s.email||'').toLowerCase()).filter(Boolean)).size;
   const avg=scores.length?Math.round(scores.reduce((a,b)=>a+Number(b.score||0),0)/scores.length):0;
   $('avgScore').textContent=avg;
   renderSurveyTable(); renderScoreTable();
@@ -157,9 +157,46 @@ function flatSurvey(s){
   Object.entries(s.satisfaction||{}).forEach(([game,items])=>Object.entries(items||{}).forEach(([k,v])=>{row['satisfaction_'+game+'_'+(Number(k)+1)]=v;}));
   return row;
 }
+const baseSurveyHeaders=['id','created_at','email','age','year','gpa','medAdminExp','wardExp','quiz_score','quiz_total','quiz_percent','game_score_text','suggestion'];
+const headerLabels={
+  id:'รหัสรายการ',
+  created_at:'วันที่ส่ง',
+  email:'อีเมล',
+  age:'อายุ',
+  year:'ชั้นปี',
+  gpa:'GPA',
+  medAdminExp:'ประสบการณ์บริหารยา',
+  wardExp:'ประสบการณ์บนหอผู้ป่วย',
+  quiz_score:'คะแนนควิช',
+  quiz_total:'คะแนนเต็มควิช',
+  quiz_percent:'ร้อยละควิช',
+  game_score_text:'คะแนนเกม',
+  suggestion:'ข้อเสนอแนะ'
+};
+function numberedKeyOrder(prefix,key){const n=Number(String(key).slice(prefix.length));return Number.isFinite(n)?n:9999}
+function surveyHeaders(rows){
+  const keys=new Set(rows.flatMap(r=>Object.keys(r)));
+  const rest=[...keys].filter(k=>!baseSurveyHeaders.includes(k));
+  const confidence=rest.filter(k=>k.startsWith('confidence_')).sort((a,b)=>numberedKeyOrder('confidence_',a)-numberedKeyOrder('confidence_',b));
+  const knowledge=rest.filter(k=>k.startsWith('knowledge_')).sort((a,b)=>numberedKeyOrder('knowledge_',a)-numberedKeyOrder('knowledge_',b));
+  const satisfaction=rest.filter(k=>k.startsWith('satisfaction_')).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+  const other=rest.filter(k=>!k.startsWith('confidence_')&&!k.startsWith('knowledge_')&&!k.startsWith('satisfaction_')).sort();
+  return baseSurveyHeaders.filter(k=>keys.has(k)).concat(confidence,knowledge,satisfaction,other);
+}
+function headerLabel(key){
+  if(headerLabels[key])return headerLabels[key];
+  if(key.startsWith('confidence_'))return 'ความมั่นใจ ข้อ '+key.replace('confidence_','');
+  if(key.startsWith('knowledge_'))return 'ควิช ข้อ '+key.replace('knowledge_','');
+  if(key.startsWith('satisfaction_')){
+    const parts=key.split('_');
+    return 'ความพึงพอใจ เกม '+(Number(parts[1])+1)+' ข้อ '+parts.slice(2).join('.');
+  }
+  return key;
+}
+function surveyExportRows(){return surveys.map(flatSurvey)}
 function renderSurveyTable(){
-  const flat=surveys.map(flatSurvey), headers=Array.from(new Set(flat.flatMap(r=>Object.keys(r))));
-  $('surveyHead').innerHTML='<tr>'+headers.map(h=>'<th>'+esc(h)+'</th>').join('')+'<th>จัดการ</th></tr>';
+  const flat=surveyExportRows(), headers=surveyHeaders(flat);
+  $('surveyHead').innerHTML='<tr>'+headers.map(h=>'<th>'+esc(headerLabel(h))+'</th>').join('')+'<th>จัดการ</th></tr>';
   const page=pageItems(flat,'surveys');
   $('surveyBody').innerHTML=page.items.map((r,i)=>'<tr>'+headers.map(h=>'<td>'+esc(r[h]||'')+'</td>').join('')+'<td><button class="btn danger" type="button" data-survey-delete="'+esc(surveys[page.start+i].id)+'">ลบ</button></td></tr>').join('')||'<tr><td colspan="'+esc(Math.max(1,headers.length+1))+'">ยังไม่มีข้อมูลแบบสอบถาม</td></tr>';
   document.querySelectorAll('[data-survey-delete]').forEach(btn=>btn.onclick=()=>deleteSurveySubmission(btn.dataset.surveyDelete));
@@ -181,17 +218,18 @@ function renderScoreTable(){
   renderPager('scorePager','scores',scores.length);
 }
 function csvCell(v){const s=String(v??'');return /[",\r\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;}
-function toCsv(rows){const headers=Array.from(new Set(rows.flatMap(r=>Object.keys(r))));return '\ufeff'+[headers.join(',')].concat(rows.map(r=>headers.map(h=>csvCell(r[h])).join(','))).join('\r\n');}
+function toCsv(rows,headers){headers=headers||Array.from(new Set(rows.flatMap(r=>Object.keys(r))));return '\ufeff'+[headers.map(h=>csvCell(headerLabel(h))).join(',')].concat(rows.map(r=>headers.map(h=>csvCell(r[h])).join(','))).join('\r\n');}
 function download(name,content,type){const blob=new Blob([content],{type});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 function toScoreRows(){return scores.map(s=>({created_at:s.created_at,email:s.email,game_id:s.game_id,game_title:s.game_title,score:s.score,completed_count:s.completed_count}));}
-function downloadExcel(){const table=$('surveyTable').outerHTML;download('ard-survey.xls','\ufeff<html><head><meta charset="utf-8"></head><body>'+table+'</body></html>','application/vnd.ms-excel;charset=utf-8');}
+function toHtmlTable(rows,headers){return '<table border="1"><thead><tr>'+headers.map(h=>'<th>'+esc(headerLabel(h))+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+headers.map(h=>'<td>'+esc(r[h]||'')+'</td>').join('')+'</tr>').join('')+'</tbody></table>'}
+function downloadExcel(){const rows=surveyExportRows(),headers=surveyHeaders(rows);download('ard-survey.xls','\ufeff<html><head><meta charset="utf-8"></head><body>'+toHtmlTable(rows,headers)+'</body></html>','application/vnd.ms-excel;charset=utf-8');}
 bindPasswordToggle('memberPasswordToggle','memberPassword');
 $('googleLoginBtn').onclick=loginWithGoogle;
 $('refreshBtn').onclick=loadData;
 $('memberRefresh').onclick=loadMembers;
 $('memberSave').onclick=saveMember;
 $('memberClear').onclick=clearMemberForm;
-$('surveyCsv').onclick=()=>download('ard-survey.csv',toCsv(surveys.map(flatSurvey)),'text/csv;charset=utf-8');
+$('surveyCsv').onclick=()=>{const rows=surveyExportRows(),headers=surveyHeaders(rows);download('ard-survey.csv',toCsv(rows,headers),'text/csv;charset=utf-8');};
 $('surveyXls').onclick=downloadExcel;
 $('scoreCsv').onclick=()=>download('ard-game-scores.csv',toCsv(toScoreRows()),'text/csv;charset=utf-8');
 $('logoutBtn').onclick=logout;
