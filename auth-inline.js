@@ -20,10 +20,6 @@ function setText(id,text){const el=$(id); if(el)el.textContent=text;}
 function show(view){['boot','auth','home','play','survey'].forEach(id=>{const el=$(id); if(el)el.classList.toggle('active',id===view);});}
 function questionnaireUrl(){if(location.protocol!=='file:'&&location.pathname!=='/questionnaire')history.pushState(null,'','/questionnaire');}
 function showPublicSurvey(){questionnaireUrl();if(!session)setText('userEmail','');show('survey');if(window.renderSurvey)window.renderSurvey();}
-function bindPasswordToggle(buttonId,inputId){
-  const btn=$(buttonId), input=$(inputId); if(!btn||!input)return;
-  btn.onclick=()=>{const visible=input.type==='text';input.type=visible?'password':'text';btn.textContent=visible?'👁':'ซ่อน';btn.setAttribute('aria-label',visible?'แสดงรหัสผ่าน':'ซ่อนรหัสผ่าน');};
-}
 function renderAuth(message){
   const host=$('authPanel'); if(!host)return;
   host.innerHTML='<div class="auth-card"><img src="assets/logo-nursing.png" alt="โลโก้"><div><p class="eyebrow">RDU antibiotics learning game</p><h1>เข้าสู่ระบบเพื่อเข้าเล่นเกม</h1><p>เข้าใช้งานด้วยบัญชี Gmail ของมหาวิทยาลัย @lamduan.mfu.ac.th เท่านั้น</p></div><button class="primary google-login" id="googleLoginBtn" type="button">เข้าสู่ระบบด้วย Gmail</button><p class="auth-status" id="authStatus">'+(message||'')+'</p>'+(ready?'':'<div class="survey-warning">ยังไม่ได้ตั้งค่า Supabase URL/Anon key ในไฟล์ supabase-config.js</div>')+'</div>';
@@ -73,20 +69,6 @@ async function refresh(){
   } finally {
     refreshing = false;
   }
-}
-async function login(){
-  const email=$('authEmail').value.trim().toLowerCase(), password=$('authPassword').value;
-  if(!email||!password){setText('authStatus','กรุณากรอกอีเมลและรหัสผ่าน');return;}
-  const {data,error}=await client.auth.signInWithPassword({email,password});
-  if(error){setText('authStatus',error.message);return;}
-  session=data.session; await refresh();
-}
-async function signup(){
-  const email=$('authEmail').value.trim().toLowerCase(), password=$('authPassword').value;
-  if(!isAllowedEmail(email)){setText('authStatus','สมัครได้เฉพาะอีเมล @lamduan.mfu.ac.th เท่านั้น');return;}
-  const {error}=await client.auth.signUp({email,password});
-  if(error){setText('authStatus',error.message);return;}
-  setText('authStatus','สมัครสำเร็จ กรุณาตรวจอีเมลเพื่อยืนยันบัญชี หากระบบตั้งค่าให้ยืนยันอีเมล');
 }
 async function loginWithGoogle(){
   if(!client){setText('authStatus','ยังไม่ได้ตั้งค่า Supabase');return;}
