@@ -52,7 +52,9 @@ async function verifyAdmin(req) {
   const user = await userRes.json();
   if (!userRes.ok) throw new Error(user?.message || 'ตรวจสอบสิทธิ์ไม่สำเร็จ');
   const email = String(user.email || '').toLowerCase();
-  if (email !== ADMIN_EMAIL) throw new Error('บัญชีนี้ไม่มีสิทธิ์แอดมิน');
+  if (email === ADMIN_EMAIL) return user;
+  const profiles = await supabase('/rest/v1/user_profiles?id=eq.' + encodeURIComponent(user.id) + '&select=role&limit=1');
+  if (profiles?.[0]?.role !== 'admin') throw new Error('บัญชีนี้ไม่มีสิทธิ์แอดมิน');
   return user;
 }
 
